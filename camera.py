@@ -20,10 +20,8 @@ class Camera:
             if not ret:
                 continue
 
-            ret, buffer = cv2.imencode('.jpg', frame)
-
             with self.lock:
-                self.frame = buffer.tobytes()
+                self.frame = frame
 
 
     def get_frame(self):
