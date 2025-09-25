@@ -17,6 +17,9 @@ class Camera:
         t.start()
         self.configure(width, height, fps)
 
+        print("Width:", self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        print("Height:", self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
 
     def update(self):
         while self.running:
