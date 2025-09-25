@@ -11,6 +11,7 @@ def generate_frames():
         frame = camera.get_frame()
 
         if frame is not None:
+            time.sleep(0.01)
             continue
         
         ret, buffer = cv2.imencode('.jpg', frame)
