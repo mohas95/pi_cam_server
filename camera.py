@@ -7,9 +7,8 @@ class Camera:
 
         self.device = device
         self.cap = cv2.VideoCapture(self.device)
-        self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
         self.width = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-        self.height = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)        
+        self.height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)        
         self.fps = self.cap.get(cv2.CAP_PROP_FPS)
         self.frame = None
         self.lock = threading.Lock()

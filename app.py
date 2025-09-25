@@ -4,7 +4,7 @@ from flask import Flask, Response, render_template
 from camera import Camera
 
 app = Flask(__name__)
-camera = Camera(width=1280, height=720)
+camera = Camera()
 
 
 def generate_frames():
