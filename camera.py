@@ -25,14 +25,16 @@ class Camera:
                 continue
 
             with self.lock:
+                ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 95])
+                frame = buffer.tobytes() 
                 self.frame = frame
-            time.sleep(0.01)
+            # time.sleep(0.01)
 
 
     def get_frame(self):
         with self.lock:
-            # return None if self.frame is None else self.frame.copy()
-            return self.frame
+            return None if self.frame is None else self.frame.copy()
+            # return self.frame
 
     def configure(self, width= None, height = None, fps = None):
 
