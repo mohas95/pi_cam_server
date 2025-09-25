@@ -3,10 +3,13 @@ import threading
 import time
 
 class Camera:
-    def __init__(self, device=0, width= 1280, height = 720, fps = 30):
+    def __init__(self, device=0, width= None, height = None, fps = None):
 
         self.device = device
         self.cap = cv2.VideoCapture(self.device)
+        self.width = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+        self.height = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)        
+        self.fps = self.cap.get(cv2.CAP_PROP_FPS)
         self.frame = None
         self.lock = threading.Lock()
         self.running = True
