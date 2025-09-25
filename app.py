@@ -7,7 +7,7 @@ camera = Camera()
 
 
 def generate_frames():
-    while true:
+    while True:
         frame = camera.get_frame()
         if frame:
             yield(b'--frame\r\n'
