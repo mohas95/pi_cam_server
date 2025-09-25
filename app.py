@@ -11,7 +11,7 @@ def generate_frames():
     while True:
         frame = camera.get_frame()
 
-        if frame is not None:
+        if frame is None:
             time.sleep(0.01)
             continue
         
