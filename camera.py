@@ -6,7 +6,7 @@ class Camera:
 
         self.device = device
         self.cap = cv2.VideoCapture(self.device)
-        self.configuire(width, height, fps)
+        self.configure(width, height, fps)
         self.frame = None
         self.lock = threading.Lock()
         self.running = True
