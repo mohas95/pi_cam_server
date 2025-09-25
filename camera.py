@@ -33,8 +33,8 @@ class Camera:
 
     def get_frame(self):
         with self.lock:
-            return None if self.frame is None else self.frame.copy()
-            # return self.frame
+            # return None if self.frame is None else self.frame.copy()
+            return self.frame
 
     def configure(self, width= None, height = None, fps = None):
 
