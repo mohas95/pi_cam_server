@@ -6,12 +6,13 @@ class Camera:
 
         self.device = device
         self.cap = cv2.VideoCapture(self.device)
-        self.configure(width, height, fps)
         self.frame = None
         self.lock = threading.Lock()
         self.running = True
         t = threading.Thread(target=self.update, daemon=True)
         t.start()
+        self.configure(width, height, fps)
+
 
     def update(self):
         while self.running:
