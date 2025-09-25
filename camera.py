@@ -12,7 +12,7 @@ class Camera:
         self.running = True
         t = threading.Thread(target=self.update, daemon=True)
         t.start()
-        # self.configure(width, height, fps)
+        self.configure(width, height, fps)
 
 
     def update(self):
