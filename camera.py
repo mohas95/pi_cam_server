@@ -1,5 +1,6 @@
 import cv2
 import threading
+import time
 
 class Camera:
     def __init__(self, device=0, width= 1280, height = 720, fps = 30):

@@ -1,4 +1,5 @@
 import cv2
+import time
 from flask import Flask, Response, render_template
 from camera import Camera
 
