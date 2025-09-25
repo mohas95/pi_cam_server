@@ -1,7 +1,7 @@
 import cv2
 import threading
 
-class camera:
+class Camera:
     def __init__(self, device=0, width= 1280, height = 720, fps = 30):
 
         self.fps = fps
