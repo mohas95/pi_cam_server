@@ -12,7 +12,6 @@ def generate_frames():
         frame = camera.get_frame()
 
         if frame is None:
-            time.sleep(0.01)
             continue
         
         ret, buffer = cv2.imencode('.jpg', frame)
@@ -27,7 +26,10 @@ def index():
 @app.route('/video_feed')
 def video_feed():
     return Response(generate_frames(), 
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+                    mimetype='multipart/x-mixed-replace; boundary=frame',
+                    headers={
+                        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+                        "Pragma": "no-cache"})
 
 
 
