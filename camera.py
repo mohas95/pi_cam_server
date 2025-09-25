@@ -4,7 +4,7 @@ import threading
 class Camera:
     def __init__(self, device=0, width= 1280, height = 720, fps = 30):
 
-        self.fps = fps
+        self.device = device
         self.cap = cv2.VideoCapture(self.device)
         self.configuire(width, height, fps)
         self.frame = None
