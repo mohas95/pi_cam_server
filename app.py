@@ -26,13 +26,14 @@ def index():
 @app.route('/video_feed')
 def video_feed():
     return Response(generate_frames(), 
-                    mimetype='multipart/x-mixed-replace; boundary=frame',
-                    headers={
-                        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
-                        "Pragma": "no-cache"})
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
-
+    # return Response(generate_frames(), 
+    #                 mimetype='multipart/x-mixed-replace; boundary=frame',
+    #                 headers={
+    #                     "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+    #                     "Pragma": "no-cache"})
 
 if __name__=="__main__":
     app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
