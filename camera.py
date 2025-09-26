@@ -6,7 +6,7 @@ class Camera:
     def __init__(self, device=0, codec = None, width= None, height = None, fps = None):
 
         self.device = device
-        # self.cap = cv2.VideoCapture(self.device, cv2.CAP_V4L2)
+        self.cap = cv2.VideoCapture(self.device, cv2.CAP_V4L2)
         self.frame = None
         self.lock = threading.Lock()
         self.running = True
@@ -33,8 +33,8 @@ class Camera:
         with self.lock:
             self.running = False
 
-            if self.cap:
-                self.cap.release()
+            # if self.cap:
+            self.cap.release()
 
             self.cap = cv2.VideoCapture(self.device, cv2.CAP_V4L2)
 
