@@ -12,7 +12,7 @@ def list_available_devices():
         capture_output=True, text=True
     )
 
-    lines = result.stdout.strip().splitlines()
+    lines = results.stdout.strip().splitlines()
 
     cameras = {}
     device_name = None
