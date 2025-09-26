@@ -4,7 +4,6 @@ import time
 
 class Camera:
     def __init__(self, device=0, codec = None, width= None, height = None, fps = None):
-        # self.device = device
         self.thread = None
         self.cap = None
         self.frame = None
@@ -58,7 +57,7 @@ class Camera:
         self.fps = self.cap.get(cv2.CAP_PROP_FPS)
 
 
-        print(f"Active -> codec={self.codec}, {self.width}x{self.height} @ {self.fps:.1f} fps")
+        print(f"Camera Device:{self.device} Active -> codec:{self.codec}, {self.width}x{self.height} @ {self.fps:.1f} fps")
         
         self.running =True
         self.thread = threading.Thread(target=self.update, daemon=True)
