@@ -6,15 +6,16 @@ import subprocess
 import re
 import glob
 
-def list_available_devices(skip_non_device = True):
+def list_available_devices(skip_non_device=True):
     cameras = {}
     if skip_non_device:
         skip_keywords = ["pisp", "bcm2835", "hevc", "codec"]
     else:
-        skip_keywords=[]
+        skip_keywords = []
 
     for dev in glob.glob("/dev/video*"):
         try:
+            # udevadm info
             result = subprocess.run(
                 ["udevadm", "info", "--query=all", "--name", dev],
                 capture_output=True, text=True, check=True
@@ -29,6 +30,7 @@ def list_available_devices(skip_non_device = True):
             if any(skip in info for skip in skip_keywords):
                 continue
 
+            # find device model name
             model = None
             for line in result.stdout.splitlines():
                 if line.strip().startswith("E: ID_MODEL="):
@@ -39,40 +41,38 @@ def list_available_devices(skip_non_device = True):
                     break
 
             name = model or dev
-            cameras[name] = dev
+
+            # query supported formats & resolutions
+            fmt_result = subprocess.run(
+                ["v4l2-ctl", "--device", dev, "--list-formats-ext"],
+                capture_output=True, text=True
+            )
+
+            formats = []
+            current_fmt = None
+            for line in fmt_result.stdout.splitlines():
+                line = line.strip()
+                # codec line
+                m = re.match(r"\[\d+\]: '(\w+)' \((.*)\)", line)
+                if m:
+                    fourcc, desc = m.groups()
+                    current_fmt = {"codec": fourcc, "desc": desc, "resolutions": []}
+                    formats.append(current_fmt)
+                # resolution line
+                elif line.startswith("Size: Discrete"):
+                    parts = line.split()
+                    res = parts[2]  # e.g. "1920x1080"
+                    current_fmt["resolutions"].append(res)
+
+            cameras[name] = {
+                "device": dev,
+                "formats": formats
+            }
 
         except subprocess.CalledProcessError:
             continue
 
     return cameras
-# def list_available_devices(skip_non_device = True):
-#     results = subprocess.run(
-#         ["v4l2-ctl", "--list-devices"],
-#         capture_output=True, text=True
-#     )
-
-#     lines = results.stdout.strip().splitlines()
-
-#     cameras = {}
-#     device_name = None
-
-#     if skip_non_device:
-#         skip_keywords = ["pisp","rpi-hevc", "platform"]
-#     else:
-#         skip_keywords=[]
-
-#     for line in lines:
-#         if not line.startswith("\t") and line.strip():
-#             device_name = line.strip().strip(":")
-#             if any(key in device_name.lower() for key in skip_keywords):
-#                 device_name=None
-#             else:
-#                 cameras[device_name] = []
-#         elif device_name and line.startswith("\t"):
-#             dev_path = line.strip()
-#             if device_name:
-#                 cameras[device_name].append(dev_path)
-#     return cameras
 
 
 

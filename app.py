@@ -8,8 +8,13 @@ from camera import Camera, list_available_devices
 
 app = Flask(__name__)
 
-for name,devs in list_available_devices().items():
-    print(f"{name}: {devs}")
+cams = list_available_devices()
+for name, info in cams.items():
+    print(f"{name} -> {info['device']}")
+    for fmt in info["formats"]:
+        print(f"  Codec: {fmt['codec']} ({fmt['desc']})")
+        for res in fmt["resolutions"]:
+            print(f"    {res}")
 
 
 
