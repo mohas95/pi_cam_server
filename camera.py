@@ -4,7 +4,7 @@ import time
 
 class Camera:
     def __init__(self, device=0, codec = None, width= None, height = None, fps = None):
-        self.device = None
+        # self.device = device
         self.thread = None
         self.cap = None
         self.frame = None
@@ -34,7 +34,7 @@ class Camera:
             if self.cap:
                 self.cap.release()
             
-            if device:
+            if device is not None:
                 self.device = device
             
             self.cap = cv2.VideoCapture(self.device, cv2.CAP_V4L2)
