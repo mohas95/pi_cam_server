@@ -36,7 +36,7 @@ class Camera:
 
         with self.lock:
             if codec:
-                self.cap.set(cv2.CAP_PROP_FOURCC, cv2,VideoWriter_fourcc(*codec))
+                self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*codec))
                 self.codec = codec
             if width:
                 self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
