@@ -2,6 +2,33 @@ import cv2
 import threading
 import time
 
+import subprocess
+import re
+
+
+def list_available_devices():
+    results = subprocess.run(
+        ["v4l2-ctl", "--list-devices"],
+        capture_output=True, text=True
+    )
+
+    lines = result.stdout.strip().splitlines()
+
+    cameras = {}
+    device_name = None
+
+    for line in lines:
+        if not line.startswith("\t"):
+            device_name = line.strip()
+            cameras[device_name] = []
+        else:
+            dev_path = line.strip()
+            if device_name:
+                cameras[device_name].append(dev_path)
+    return cameras
+
+
+
 class Camera:
     def __init__(self, device=0, codec = None, width= None, height = None, fps = None):
         self.thread = None

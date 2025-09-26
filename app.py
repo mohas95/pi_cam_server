@@ -1,13 +1,19 @@
 import cv2
 import time
 from flask import Flask, Response, render_template
-from camera import Camera
+from camera import Camera, list_available_devices
+
+
+
 
 app = Flask(__name__)
-camera = Camera(device =0, codec="MJPG", width=1920, height=1080, fps=30)
-# camera = Camera()
 
-# camera.configure(codec="MJPG", width=1280, height=720, fps=30)
+for name,devs in list_available_devices().items():
+    print(f"{name}: {', '.join(devs)}")
+
+
+
+camera = Camera(device =0, codec="MJPG", width=1920, height=1080, fps=30)
 
 def generate_frames():
     while True:
