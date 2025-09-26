@@ -4,12 +4,12 @@ from flask import Flask, Response, render_template
 from camera import Camera
 
 app = Flask(__name__)
-camera = Camera()
+camera = Camera(width=1280, height=720)
 
 
 def generate_frames():
     while True:
-        frame = camera.get_frame(width=1280, height=720)
+        frame = camera.get_frame()
 
         if frame is None:
             continue
