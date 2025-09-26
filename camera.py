@@ -6,15 +6,12 @@ class Camera:
     def __init__(self, device=0, codec = None, width= None, height = None, fps = None):
 
         self.device = device
-        self.cap = cv2.VideoCapture(self.device, cv2.CAP_V4L2)
-        # self.width = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-        # self.height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)        
-        # self.fps = self.cap.get(cv2.CAP_PROP_FPS)
+        # self.cap = cv2.VideoCapture(self.device, cv2.CAP_V4L2)
         self.frame = None
         self.lock = threading.Lock()
         self.running = True
-        t = threading.Thread(target=self.update, daemon=True)
-        t.start()
+        # t = threading.Thread(target=self.update, daemon=True)
+        # t.start()
         self.configure(codec, width, height, fps)
 
 
@@ -33,8 +30,12 @@ class Camera:
             return None if self.frame is None else self.frame.copy()
 
     def configure(self, codec = None, width = None, height = None, fps = None):
-
         with self.lock:
+            self.running = False
+            self.cap.release()
+
+            self.cap = cv2.VideoCapture(self.device, cv2.CAP_V4L2)
+
             if codec:
                 self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*codec))
                 self.codec = codec
@@ -48,10 +49,14 @@ class Camera:
                 self.cap.set(cv2.CAP_PROP_FPS, fps)
                 self.fps = fps
         
-        
         fourcc = int(self.cap.get(cv2.CAP_PROP_FOURCC))
         codec = "".join([chr((fourcc>>8*i) & 0xFF) for i in range(4)])
         print(f"Width:{self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)}, Height:{self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)}, FPS:{self.cap.get(cv2.CAP_PROP_FPS)}, codec:{codec}")
+
+        self.running =True
+        t = threading.Thread(target=self.update, daemon=True)
+        t.start()
+
 
 
 
