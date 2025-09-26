@@ -7,9 +7,9 @@ class Camera:
 
         self.device = device
         self.cap = cv2.VideoCapture(self.device)
-        self.width = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-        self.height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)        
-        self.fps = self.cap.get(cv2.CAP_PROP_FPS)
+        # self.width = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+        # self.height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)        
+        # self.fps = self.cap.get(cv2.CAP_PROP_FPS)
         self.frame = None
         self.lock = threading.Lock()
         self.running = True
@@ -50,8 +50,8 @@ class Camera:
         
         
         fourcc = int(self.cap.get(cv2.CAP_PROP_FOURCC))
-        codec = "".join([chr((fourcc>>7*i) & 0xFF) for i in range(4)])
-        print(f"Width:{self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)}, Height:{self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)}, FPS:{self.cap.get(cv2.CAP_PROP_FPS)}, codec= {codec}")
+        codec = "".join([chr((fourcc>>8*i) & 0xFF) for i in range(4)])
+        print(f"Width:{self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)}, Height:{self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)}, FPS:{self.cap.get(cv2.CAP_PROP_FPS)}, codec:{codec}")
 
 
 
