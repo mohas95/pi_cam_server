@@ -25,13 +25,12 @@ class Camera:
             return None if self.frame is None else self.frame.copy()
 
     def configure(self, device=None, codec = None, width = None, height = None, fps = None):
+
+        if self.running:
+            self.running = False
+            if self.thread:
+                self.thread.join()
         with self.lock:
-
-            if self.running:
-                self.running = False
-                if self.thread:
-                    self.thread.join()
-
             if self.cap:
                 self.cap.release()
             
@@ -50,14 +49,17 @@ class Camera:
                 self.cap.set(cv2.CAP_PROP_FPS, fps)
         
         fourcc = int(self.cap.get(cv2.CAP_PROP_FOURCC))
-        self.codec = "".join([chr((fourcc>>8*i) & 0xFF) for i in range(4)])
+        if fourcc:
+            self.codec = "".join([chr((fourcc>>8*i) & 0xFF) for i in range(4)])
+        else:
+            self.codec = "unknown"
         self.width = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
         self.height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
         self.fps = self.cap.get(cv2.CAP_PROP_FPS)
 
 
-        print(f"Width:{self.width}, Height:{self.height}, FPS:{self.fps}, codec:{self.codec}")
-
+        print(f"Active -> codec={self.codec}, {self.width}x{self.height} @ {self.fps:.1f} fps")
+        
         self.running =True
         self.thread = threading.Thread(target=self.update, daemon=True)
         self.thread.start()
