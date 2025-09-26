@@ -6,7 +6,7 @@ import subprocess
 import re
 
 
-def list_available_devices():
+def list_available_devices(skip_non_device = True):
     results = subprocess.run(
         ["v4l2-ctl", "--list-devices"],
         capture_output=True, text=True
@@ -17,11 +17,19 @@ def list_available_devices():
     cameras = {}
     device_name = None
 
+    if skip_non_device:
+        skip_keywords = ["pisp","rpi-hevc", "platform"]
+    else:
+        skip_keywords=[]
+
     for line in lines:
-        if not line.startswith("\t"):
-            device_name = line.strip()
-            cameras[device_name] = []
-        else:
+        if not line.startswith("\t") and line.strip():
+            device_name = line.strip().strip(":")
+            if any(key in device_name.lower() for key in skip_keywords):
+                device_name=None
+            else:
+                cameras[device_name] = []
+        elif device_name and line.startswith("\t"):
             dev_path = line.strip()
             if device_name:
                 cameras[device_name].append(dev_path)
