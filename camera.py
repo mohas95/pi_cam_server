@@ -6,8 +6,12 @@ import subprocess
 import re
 import glob
 
-def list_available_devices():
+def list_available_devices(skip_non_device = True
     cameras = {}
+    if skip_non_device:
+        skip_keywords = ["pisp", "bcm2835", "hevc", "codec"]
+    else:
+        skip_keywords=[]
 
     for dev in glob.glob("/dev/video*"):
         try:
@@ -15,34 +19,32 @@ def list_available_devices():
                 ["udevadm", "info", "--query=all", "--name", dev],
                 capture_output=True, text=True, check=True
             )
-            info = result.stdout
+            info = result.stdout.lower()
 
-            # Must be a capture interface
-            if "ID_V4L_CAPABILITIES=:capture:" not in info:
+            # must be capture capable
+            if "id_v4l_capabilities=:capture:" not in info:
+                continue
+
+            # skip known ISP/decoder/encoder nodes
+            if any(skip in info for skip in skip_keywords):
                 continue
 
             model = None
-            driver = None
-
-            for line in info.splitlines():
-                line = line.strip()
-                if line.startswith("E: ID_MODEL="):
+            for line in result.stdout.splitlines():
+                if line.strip().startswith("E: ID_MODEL="):
                     model = line.split("=", 1)[1]
-                if line.startswith("E: ID_V4L_PRODUCT="):
-                    driver = line.split("=", 1)[1]
+                    break
+                if line.strip().startswith("E: ID_V4L_PRODUCT="):
+                    model = line.split("=", 1)[1]
+                    break
 
-            # Filter out devices with no model/product info (likely ISP/decoder nodes)
-            if not model and not driver:
-                continue
-
-            name = model or driver or dev
+            name = model or dev
             cameras[name] = dev
 
         except subprocess.CalledProcessError:
             continue
 
     return cameras
-
 # def list_available_devices(skip_non_device = True):
 #     results = subprocess.run(
 #         ["v4l2-ctl", "--list-devices"],
