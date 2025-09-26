@@ -4,13 +4,13 @@ import time
 
 class Camera:
     def __init__(self, device=0, codec = None, width= None, height = None, fps = None):
-
+        self.device = device
         self.thread = None
         self.cap = None
         self.frame = None
         self.running = False
         self.lock = threading.Lock()
-        self.configure(device, codec, width, height, fps)
+        self.configure(self.device, codec, width, height, fps)
 
     def update(self):
         while self.running:
