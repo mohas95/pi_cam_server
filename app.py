@@ -9,7 +9,7 @@ camera = Camera()
 
 def generate_frames():
     while True:
-        frame = camera.get_frame()
+        frame = camera.get_frame(width=1280, height=720)
 
         if frame is None:
             continue
