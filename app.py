@@ -9,7 +9,7 @@ from camera import Camera, list_available_devices
 app = Flask(__name__)
 
 for name,devs in list_available_devices().items():
-    print(f"{name}: {', '.join(devs)}")
+    print(f"{name}: {devs}")
 
 
 

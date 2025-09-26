@@ -4,36 +4,76 @@ import time
 
 import subprocess
 import re
+import glob
 
-
-def list_available_devices(skip_non_device = True):
-    results = subprocess.run(
-        ["v4l2-ctl", "--list-devices"],
-        capture_output=True, text=True
-    )
-
-    lines = results.stdout.strip().splitlines()
-
+def list_available_devices():
     cameras = {}
-    device_name = None
 
-    if skip_non_device:
-        skip_keywords = ["pisp","rpi-hevc", "platform"]
-    else:
-        skip_keywords=[]
+    # find all /dev/video* nodes
+    for dev in glob.glob("/dev/video*"):
+        try:
+            # query udevadm for device info
+            result = subprocess.run(
+                ["udevadm", "info", "--query=all", "--name", dev],
+                capture_output=True, text=True, check=True
+            )
+            info = result.stdout
 
-    for line in lines:
-        if not line.startswith("\t") and line.strip():
-            device_name = line.strip().strip(":")
-            if any(key in device_name.lower() for key in skip_keywords):
-                device_name=None
-            else:
-                cameras[device_name] = []
-        elif device_name and line.startswith("\t"):
-            dev_path = line.strip()
-            if device_name:
-                cameras[device_name].append(dev_path)
+            # filter: must have capture capability
+            if "ID_V4L_CAPABILITIES=:capture:" not in info:
+                continue
+
+            # get model name if available
+            model = None
+            for line in info.splitlines():
+                if line.strip().startswith("E: ID_MODEL="):
+                    model = line.split("=", 1)[1]
+                    break
+
+            # fallback if no model found
+            if not model:
+                model = dev
+
+            cameras[model] = dev
+
+        except subprocess.CalledProcessError:
+            continue
+
     return cameras
+
+
+
+
+
+
+# def list_available_devices(skip_non_device = True):
+#     results = subprocess.run(
+#         ["v4l2-ctl", "--list-devices"],
+#         capture_output=True, text=True
+#     )
+
+#     lines = results.stdout.strip().splitlines()
+
+#     cameras = {}
+#     device_name = None
+
+#     if skip_non_device:
+#         skip_keywords = ["pisp","rpi-hevc", "platform"]
+#     else:
+#         skip_keywords=[]
+
+#     for line in lines:
+#         if not line.startswith("\t") and line.strip():
+#             device_name = line.strip().strip(":")
+#             if any(key in device_name.lower() for key in skip_keywords):
+#                 device_name=None
+#             else:
+#                 cameras[device_name] = []
+#         elif device_name and line.startswith("\t"):
+#             dev_path = line.strip()
+#             if device_name:
+#                 cameras[device_name].append(dev_path)
+#     return cameras
 
 
 
