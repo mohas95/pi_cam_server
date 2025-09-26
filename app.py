@@ -7,7 +7,7 @@ app = Flask(__name__)
 camera = Camera(device =0, codec="MJPG", width=1920, height=1080, fps=30)
 # camera = Camera()
 
-Camera.configure(codec="MJPG", width=1280, height=720, fps=30)
+camera.configure(codec="MJPG", width=1280, height=720, fps=30)
 
 def generate_frames():
     while True:
