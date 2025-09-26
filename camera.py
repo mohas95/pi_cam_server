@@ -32,7 +32,9 @@ class Camera:
     def configure(self, codec = None, width = None, height = None, fps = None):
         with self.lock:
             self.running = False
-            self.cap.release()
+
+            if self.cap:
+                self.cap.release()
 
             self.cap = cv2.VideoCapture(self.device, cv2.CAP_V4L2)
 
