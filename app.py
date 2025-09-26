@@ -4,7 +4,8 @@ from flask import Flask, Response, render_template
 from camera import Camera
 
 app = Flask(__name__)
-camera = Camera(codec="MJPG", width=1280, height=720, fps=30)
+# camera = Camera(codec="MJPG", width=1280, height=720, fps=30)
+camera = Camera()
 
 
 def generate_frames():
