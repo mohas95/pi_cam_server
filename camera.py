@@ -6,7 +6,7 @@ import subprocess
 import re
 import glob
 
-def list_available_devices(skip_non_device = True
+def list_available_devices(skip_non_device = True)
     cameras = {}
     if skip_non_device:
         skip_keywords = ["pisp", "bcm2835", "hevc", "codec"]
