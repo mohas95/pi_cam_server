@@ -9,42 +9,39 @@ import glob
 def list_available_devices():
     cameras = {}
 
-    # find all /dev/video* nodes
     for dev in glob.glob("/dev/video*"):
         try:
-            # query udevadm for device info
             result = subprocess.run(
                 ["udevadm", "info", "--query=all", "--name", dev],
                 capture_output=True, text=True, check=True
             )
             info = result.stdout
 
-            # filter: must have capture capability
+            # Must be a capture interface
             if "ID_V4L_CAPABILITIES=:capture:" not in info:
                 continue
 
-            # get model name if available
             model = None
+            driver = None
+
             for line in info.splitlines():
-                if line.strip().startswith("E: ID_MODEL="):
+                line = line.strip()
+                if line.startswith("E: ID_MODEL="):
                     model = line.split("=", 1)[1]
-                    break
+                if line.startswith("E: ID_V4L_PRODUCT="):
+                    driver = line.split("=", 1)[1]
 
-            # fallback if no model found
-            if not model:
-                model = dev
+            # Filter out devices with no model/product info (likely ISP/decoder nodes)
+            if not model and not driver:
+                continue
 
-            cameras[model] = dev
+            name = model or driver or dev
+            cameras[name] = dev
 
         except subprocess.CalledProcessError:
             continue
 
     return cameras
-
-
-
-
-
 
 # def list_available_devices(skip_non_device = True):
 #     results = subprocess.run(
