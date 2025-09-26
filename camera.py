@@ -51,7 +51,7 @@ class Camera:
         
         fourcc = int(self.cap.get(cv2.CAP_PROP_FOURCC))
         codec = "".join([chr((fourcc>>7*i) & 0xFF) for i in range(4)])
-        print(f"Width:{}, Height:{}, FPS:{}, codec= {}", self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT), self.cap.get(cv2.CAP_PROP_FPS), codec )
+        print(f"Width:{self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)}, Height:{self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)}, FPS:{self.cap.get(cv2.CAP_PROP_FPS)}, codec= {codec}")
 
 
 
