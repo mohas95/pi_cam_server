@@ -68,6 +68,11 @@ def configure():
     else:
         width, height = None, None
 
+    if fps:
+        fps = int(fps)
+    else:
+        fps = None
+
     camera.configure(device= dev, codec = codec, width=width, height=height, fps = fps)
     
     return jsonify({"status":"ok"})

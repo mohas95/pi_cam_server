@@ -74,7 +74,7 @@ def list_available_devices(skip_non_device=True):
                 if line.startswith("Interval: Discrete") and current_res is not None:
                     fps_match = re.search(r"\(([\d\.]+)\s*fps\)", line)
                     if fps_match:
-                        fps_val= int(fps_match.group(1))
+                        fps_val= float(fps_match.group(1))
                         current_res["fps"].append(fps_val)
 
             cameras[name] = {
