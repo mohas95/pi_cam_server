@@ -67,7 +67,7 @@ def configure():
     fps = data.get("fps")
 
     if res:
-        width, height = map.(int, res.split("x"))
+        width, height = map(int, res.split("x"))
     else:
         width, height = None, None
 
