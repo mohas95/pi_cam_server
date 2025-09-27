@@ -47,17 +47,25 @@
         </div>
 
         <div class="controls">
-            <label for="device">Device: </label> 
-            <select id="device"></select>
+            <!-- <label for="device">Device: </label>  -->
+            <select id="device">
+                <option value="" disabled selected>Select device</option>
+            </select>
 
-            <label for="codec">Codec: </label> 
-            <select id="codec"></select>
+            <!-- <label for="codec">Codec: </label>  -->
+            <select id="codec">
+                <option value="" disabled selected>Select codec</option>
+            </select>
 
-            <label for="resolution">Resolution: </label> 
-            <select id="resolution"></select>
+            <!-- <label for="resolution">Resolution: </label>  -->
+            <select id="resolution">
+                <option value="" disabled selected>Select resolution</option>
+            </select>
 
-            <label for="fps">FPS: </label>
-            <select id="fps"></select>
+            <!-- <label for="fps">FPS: </label> -->
+            <select id="fps">
+                <option value="" disabled selected>Select fps</option>
+            </select>
 
             <button onclick="applyConfig()">Configure</button>
 
