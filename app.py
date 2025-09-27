@@ -1,6 +1,6 @@
 import cv2
 import time
-from flask import Flask, Response, render_template
+from flask import Flask, Response, render_template,jsonify, request
 from camera import Camera, list_available_devices
 
 
@@ -47,6 +47,24 @@ def video_feed():
     #                 headers={
     #                     "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
     #                     "Pragma": "no-cache"})
+
+
+
+@app.route("/devices")
+def devices():
+    return jsonify(list_available_devices())
+
+
+
+
+
+# @app.route("/configure", methods=["POST"])
+# def configure():
+#     return
+
+
+
+
 
 if __name__=="__main__":
     app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
