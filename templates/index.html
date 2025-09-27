@@ -3,6 +3,15 @@
 <html>
     <head>
         <title>Campi Server</title>
+
+        <style>
+            body{ font-family: sans-serif;}
+            .controls {margin-bottom: 1em;}
+
+            select, button {margin-right: 0.5em;}
+        </style>
+
+
     </head>
     <body>
         <img id="video" src="{{ url_for('video_feed') }}" width="640">
@@ -21,7 +30,7 @@
             <label for="fps">FPS: </label>
             <select id="fps"></select>
 
-            <button onclick="applyConfig()"></button>
+            <button onclick="applyConfig()">Configure</button>
 
         </div>
 
