@@ -50,6 +50,7 @@ def list_available_devices(skip_non_device=True):
 
             formats = []
             current_fmt = None
+            current_res = None
             for line in fmt_result.stdout.splitlines():
                 line = line.strip()
                 # codec line
@@ -58,11 +59,23 @@ def list_available_devices(skip_non_device=True):
                     fourcc, desc = m.groups()
                     current_fmt = {"codec": fourcc, "desc": desc, "resolutions": []}
                     formats.append(current_fmt)
+                    continue
+                
                 # resolution line
-                elif line.startswith("Size: Discrete"):
+                if line.startswith("Size: Discrete"):
                     parts = line.split()
                     res = parts[2]  # e.g. "1920x1080"
-                    current_fmt["resolutions"].append(res)
+                    current_res = {"resolution":res, "fps": []}
+                    if current_fmt is not None:
+                        current_fmt["resolutions"].append(current_res)
+                    continue
+
+                # fps line
+                if line.startswith("Interval: Discrete") and current_res is not None:
+                    fps_match = re.search(r"\(([\d\.]+)\s*fps\)", line)
+                    if fps_match:
+                        fps_val= float(fps_match.group(1))
+                        current_res["fps"].append(fps_val)
 
             cameras[name] = {
                 "device": dev,

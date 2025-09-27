@@ -8,13 +8,13 @@ from camera import Camera, list_available_devices
 
 app = Flask(__name__)
 
-cams = list_available_devices()
-for name, info in cams.items():
-    print(f"{name} -> {info['device']}")
-    for fmt in info["formats"]:
-        print(f"  Codec: {fmt['codec']} ({fmt['desc']})")
-        for res in fmt["resolutions"]:
-            print(f"    {res}")
+# cams = list_available_devices()
+# for name, info in cams.items():
+#     print(f"{name} -> {info['device']}")
+#     for fmt in info["formats"]:
+#         print(f"  Codec: {fmt['codec']} ({fmt['desc']})")
+#         for res in fmt["resolutions"]:
+#             print(f"    {res}")
 
 
 
@@ -53,9 +53,6 @@ def video_feed():
 @app.route("/devices")
 def devices():
     return jsonify(list_available_devices())
-
-
-
 
 
 @app.route("/configure", methods=["POST"])
