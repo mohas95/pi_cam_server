@@ -5,7 +5,7 @@
         <title>Campi Server</title>
     </head>
     <body>
-        <img src="{{ url_for('video_feed') }}" width="640">
+        <img id="video" src="{{ url_for('video_feed') }}" width="640">
 
 
         <div class="controls">
@@ -22,6 +22,89 @@
 
         </div>
 
+        <script>
+            let devices={};
 
+            async function loadDevices(){
+                const res = await fetch("/devices");
+                devices = await res.json();
+
+                const deviceSel = document.getElementById("device");
+                deviceSel.innerHTML="";
+
+                for (const [name, info] of Object.entries(devices)){
+                    const opt = document.createElement("option");
+                    opt.value = info.device;
+                    opt.dataset.name = name;
+                    opt.textContent = `${name} (${info.device})`;
+                    deviceSel.appendChild(opt);
+                }
+                updateCodecs();
+            }
+
+
+            function updateCodecs(){
+                const selected_device = document.getElementById("device").selectedOptions[0]
+                const devName = selected_device.dataset.name;
+                const devInfo = devices[devName];
+                const codecSel = document.getElementById("codec");
+                codecSel.innerHTML = "";
+
+                devInfo.formats.forEach( fmt => {
+                    const opt = document.createElement("option");
+                    opt.value = fmt.codec;
+                    opt.textContent = `${fmt.codec} (${fmt.desc})`;
+                    codecSel.appendChild(opt);
+                    }
+                );
+
+                updateResolutions();
+
+            }
+
+            function updateResolutions(){
+                const selected_device = document.getElementById("device").selectedOptions[0]
+                const devName = selected_device.dataset.name;
+                const devInfo = devices[devName];
+                const codec = document.getElementById("codec").value;
+                const resSel = document.getElementById("resolution");
+                resSel.innerHTML = "";
+
+                const fmt = devInfo.formats.find(f => f.codec === codec);
+
+                if (fmt) {
+                    fmt.resolutions.forEach(r => {
+                        const opt = document.createElement("option");
+                        opt.value = r;
+                        opt.tectContent = r;
+                        resSel.appendChild(opt);
+                        }
+                    );
+                }
+            }
+
+            async function applyConfig() {
+                const device = document.getElementById("device").value;
+                const codec = document.getElementById("codec").value;
+                const resolution = document.getElementById("resolution").value;
+
+                await fetch("/configure",{
+                        method: "POST",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify({device, codec, resolution})
+                    }
+                );
+
+                const img = document.getElementById("video");
+                img.src = "{{ url_for('video_feed') }}" + "?" + new Date().getTime();
+
+            }
+
+            document.getElementById("device").addEventListener("change", updateCodecs);
+            document.getElementById("codec").addEventListener("change", updateResolutions);
+            
+            loadDevices();
+
+        </script>
     </body>
 </html>
