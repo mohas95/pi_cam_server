@@ -73,7 +73,7 @@ def configure():
 
     camera.configure(device= dev, codec = codec, width=width, height=height, fps = fps)
     
-    return jsonify({}"status":"ok"})
+    return jsonify({"status":"ok"})
 
 
 
