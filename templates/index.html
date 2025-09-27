@@ -15,7 +15,7 @@
             <label for="codec">Codec: </label> 
             <select id="codec"></select>
 
-            <label for="resolution">Device: </label> 
+            <label for="resolution">Resolution: </label> 
             <select id="resolution"></select>
 
             <button onclick="applyConfig()"></button>
@@ -76,7 +76,7 @@
                     fmt.resolutions.forEach(r => {
                         const opt = document.createElement("option");
                         opt.value = r;
-                        opt.tectContent = r;
+                        opt.textContent = r;
                         resSel.appendChild(opt);
                         }
                     );
