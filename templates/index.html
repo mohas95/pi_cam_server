@@ -84,17 +84,47 @@
                         }
                     );
                 }
+
+                updateFPS();
             }
+
+
+            function updateFPS(){
+                const selected_device = document.getElementById("device").selectedOptions[0]
+                const devName = selected_device.dataset.name;
+                const devInfo = devices[devName];
+                const codec = document.getElementById("codec").value;
+                const res = document.getElementById("resolution").value;
+                const fpsSel = document.getElementById("fps");
+                fpsSel.innerHTML = "";
+
+                const fmt = devInfo.formats.find(f => f.codec === codec);
+                const res_fmt = fmt.resolutions.find(r=> r.resolution ===res);
+
+                if (res_fmt) {
+                    res_fmt.fps.forEach(fs => {
+                        const opt = document.createElement("option");
+                        opt.value = fs;
+                        opt.textContent = fs;
+                        fpsSel.appendChild(fs);
+                        }
+                    );
+                }
+
+            }
+
 
             async function applyConfig() {
                 const device = document.getElementById("device").value;
                 const codec = document.getElementById("codec").value;
                 const resolution = document.getElementById("resolution").value;
+                const fps = document.getElementById("fps").value;
+
 
                 await fetch("/configure",{
                         method: "POST",
                         headers: {"Content-Type": "application/json"},
-                        body: JSON.stringify({device, codec, resolution})
+                        body: JSON.stringify({device, codec, resolution, fps})
                     }
                 );
 
@@ -105,6 +135,8 @@
 
             document.getElementById("device").addEventListener("change", updateCodecs);
             document.getElementById("codec").addEventListener("change", updateResolutions);
+            document.getElementById("resolution").addEventListener("change", updateFPS);
+
             
             loadDevices();
 
