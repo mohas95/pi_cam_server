@@ -18,6 +18,9 @@
             <label for="resolution">Resolution: </label> 
             <select id="resolution"></select>
 
+            <label for="fps">FPS: </label>
+            <select id="fps"></select>
+
             <button onclick="applyConfig()"></button>
 
         </div>
@@ -75,8 +78,8 @@
                 if (fmt) {
                     fmt.resolutions.forEach(r => {
                         const opt = document.createElement("option");
-                        opt.value = r;
-                        opt.textContent = r;
+                        opt.value = r.resolution;
+                        opt.textContent = r.resoltion;
                         resSel.appendChild(opt);
                         }
                     );
