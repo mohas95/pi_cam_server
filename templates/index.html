@@ -9,13 +9,21 @@
             .controls {margin-bottom: 1em;}
 
             select, button {margin-right: 0.5em;}
+
+            .video-container {
+                width: 90%;
+                max-width: 800px;
+                margin: 0 auto;
+            }
+
         </style>
 
 
     </head>
     <body>
-        <img id="video" src="{{ url_for('video_feed') }}" width="640">
-
+        <div class="video-container">
+            <img id="video" src="{{ url_for('video_feed') }}">
+        </div>
 
         <div class="controls">
             <label for="device">Device: </label> 
