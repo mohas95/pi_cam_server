@@ -58,9 +58,22 @@ def devices():
 
 
 
-# @app.route("/configure", methods=["POST"])
-# def configure():
-#     return
+@app.route("/configure", methods=["POST"])
+def configure():
+    data = request.json
+    dev = data.get("device")
+    codec = data.get("codec")
+    res = data.get("resolution")
+    fps = data.get("fps")
+
+    if res:
+        width, height = map.(int, res.split("x"))
+    else:
+        width, height = None, None
+
+    camera.configure(device= dev, codec = codec, width=width, height=height, fps = fps)
+    
+    return jsonify({}"status":"ok"})
 
 
 
