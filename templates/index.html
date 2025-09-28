@@ -37,11 +37,22 @@
                 margin: 0 auto;
             }
 
+            .status {
+                margin-top: 1em;
+                text-align: center;
+                font-size: 0.95em;
+                color: #444;
+                font-family: monospace;
+            }
+
         </style>
 
 
     </head>
     <body>
+        <div id="current-config" class="status">
+            Current: None
+        </div>
         <div class="video-container">
             <img id="video" src="{{ url_for('video_feed') }}">
         </div>
@@ -176,7 +187,15 @@
 
                 const img = document.getElementById("video");
                 img.src = "{{ url_for('video_feed') }}" + "?" + new Date().getTime();
+                refreshConfig();
 
+            }
+
+            async function refreshConfig() {
+                const res = await fetch("/current_config");
+                const cfg = await res.json();
+                
+                document.getElementById("current-config").textContent = `Current: ${cfg.device}, ${cfg.codec}, ${cfg.width}x${cfg.height} @ ${cfg.fps}fps`;
             }
 
             document.getElementById("device").addEventListener("change", updateCodecs);
@@ -185,6 +204,7 @@
 
             
             loadDevices();
+            refreshConfig()
 
         </script>
     </body>
