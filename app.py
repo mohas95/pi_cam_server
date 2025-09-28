@@ -3,9 +3,6 @@ import time
 from flask import Flask, Response, render_template,jsonify, request
 from camera import Camera, list_available_devices
 
-
-
-
 app = Flask(__name__)
 
 # cams = list_available_devices()
@@ -17,8 +14,7 @@ app = Flask(__name__)
 #             print(f"    {res}")
 
 
-
-camera = Camera(device =0, codec="MJPG", width=1920, height=1080, fps=30)
+camera = Camera()
 
 def generate_frames():
     while True:
