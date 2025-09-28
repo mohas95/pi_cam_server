@@ -90,7 +90,7 @@ def list_available_devices(skip_non_device=True):
 
 
 class Camera:
-    def __init__(self, device=0, codec = None, width= None, height = None, fps = None):
+    def __init__(self, device="/dev/video0", codec = None, width= None, height = None, fps = None):
         self.thread = None
         self.cap = None
         self.frame = None
@@ -105,6 +105,19 @@ class Camera:
                 continue
             with self.lock:
                 self.frame = frame
+
+    def get_config(self):
+        with self.lock:
+
+            return {
+                "device": self.device,
+                "codec": self.codec,
+                "width": self.width,
+                "height": self.height,
+                "fps": self.fps
+            }
+
+
 
     def get_frame(self):
         with self.lock:
