@@ -167,4 +167,14 @@ POST /configure
 ```
 - Returns { "status": "ok" } if successful
 
+### 7. info
+```bash
+GET /info
+```
+- gets info about the current setup for meta data purposes
+```json
+{"codec":"YUYV","device":"/dev/video0","device_name":"C922 Pro Stream Webcam","fps":30.0,"height":480.0,"width":640.0}
+```
+
+
 --- 
