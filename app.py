@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 import time
 from flask import Flask, Response, render_template,jsonify, request
 from camera import Camera, list_available_devices
@@ -28,7 +29,6 @@ def generate_frames():
         yield(b'--frame\r\n'
               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
-
 @app.route('/')
 def index():
     return render_template("index.html")
@@ -46,6 +46,43 @@ def video_feed():
                     headers={
                         "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
                         "Pragma": "no-cache"})
+
+@app.route("/lossless_frame")
+def lossless_frame():
+    frame=camera.get_raw_frame()
+    if frame is None:
+        return jsonify({"error": "no raw frame available"}), 500
+    
+    ret, buf = cv2.imencode(".png", frame)
+
+    if not ret:
+        return jsonify({"error": "encoding failed"}), 500
+
+    return Response(buf.tobytes(), mimetype="image/png")
+
+
+@app.route("/raw_frame")
+def raw_frame():
+    frame=camera.get_raw_frame()
+    if frame is None:
+        return jsonify({"error": "no raw frame available"}), 500
+
+    data = frame.tobytes()
+    shape = frame.shape
+    dtype = str(frame.dtype)
+
+    resp = Response(data, mimetype="application/octet-stream")
+    resp.headers["X-Height"] = str(shape[0])
+    resp.headers["X-Width"] = str(shape[1])
+    resp.headers["X-Channels"] = str(shape[2])
+    resp.headers["X-Dtype"] = dtype
+
+    return resp
+
+
+    
+
+
 
 
 @app.route("/devices")

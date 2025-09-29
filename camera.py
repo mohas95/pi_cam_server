@@ -99,13 +99,6 @@ class Camera:
         self.lock = threading.Lock()
         self.configure(device, codec, width, height, fps)
 
-    # def update(self):
-    #     while self.running:
-    #         ret, frame = self.cap.read()
-    #         if not ret:
-    #             continue
-    #         with self.lock:
-    #             self.frame = frame
 
     def update(self):
         while self.running:
@@ -154,7 +147,7 @@ class Camera:
             if self.cap:
                 self.cap.release()
         
-        print("Camera stoppped and released")
+        print("Camera stopped and released")
 
     def configure(self, device=None, codec = None, width = None, height = None, fps = None):
 
