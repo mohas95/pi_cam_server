@@ -4,6 +4,7 @@ import time
 from flask import Flask, Response, render_template,jsonify, request
 from camera import Camera, list_available_devices
 import atexit, signal, sys
+import socket
 
 app = Flask(__name__)
 
@@ -113,8 +114,32 @@ def configure():
     return jsonify({"status":"ok"})
 
 
+@app.route("/info")
+def info():
+    try:
+        ip = socket.gethostbyname(socket.gethostname())
+    except Exception:
+        ip = "unknown"
 
+    config = camera.get_config()
 
+    devices = list_available_devices()
+    device_name = None
+    for name, info in devices.items():
+        if info["device"] == config.get("device"):
+            device_name = name
+            break
+
+    return jsonify({
+        "ip": ip,
+        "device_name": device_name or "unknown",
+        "device": config.get("device"),
+        "codec": config.get("codec"),
+        "width": config.get("width"),
+        "height": config.get("height"),
+        "fps": config.get("fps")
+    })
+   
 
 if __name__=="__main__":
     app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
