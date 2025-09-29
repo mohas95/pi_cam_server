@@ -98,13 +98,26 @@ class Camera:
         self.lock = threading.Lock()
         self.configure(device, codec, width, height, fps)
 
+    # def update(self):
+    #     while self.running:
+    #         ret, frame = self.cap.read()
+    #         if not ret:
+    #             continue
+    #         with self.lock:
+    #             self.frame = frame
+
     def update(self):
         while self.running:
             ret, frame = self.cap.read()
             if not ret:
                 continue
+
+            ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 95])
+            frame = buffer.tobytes()
+
             with self.lock:
                 self.frame = frame
+
 
     def get_config(self):
         with self.lock:
@@ -121,7 +134,8 @@ class Camera:
 
     def get_frame(self):
         with self.lock:
-            return None if self.frame is None else self.frame.copy()
+            # return None if self.frame is None else self.frame.copy()
+            return self.frame
 
     def configure(self, device=None, codec = None, width = None, height = None, fps = None):
 

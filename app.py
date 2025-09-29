@@ -16,17 +16,27 @@ app = Flask(__name__)
 
 camera = Camera()
 
+# def generate_frames():
+#     while True:
+#         frame = camera.get_frame()
+
+#         if frame is None:
+#             continue
+        
+#         ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 95])
+#         frame = buffer.tobytes()
+#         yield(b'--frame\r\n'
+#               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+
+
+
 def generate_frames():
     while True:
         frame = camera.get_frame()
-
-        if frame is None:
-            continue
-        
-        ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 95])
-        frame = buffer.tobytes()
         yield(b'--frame\r\n'
               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
 
 @app.route('/')
 def index():
