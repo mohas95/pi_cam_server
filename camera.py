@@ -111,6 +111,7 @@ class Camera:
         while self.running:
             ret, frame = self.cap.read()
             if not ret:
+                time.sleep(0.05)
                 continue
 
             
@@ -120,6 +121,7 @@ class Camera:
             with self.lock:
                 self.frame_jpg = frame_jpg
                 self.frame_raw = frame
+            time.sleep(0.01)
 
 
     def get_config(self):
