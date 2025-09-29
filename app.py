@@ -4,7 +4,9 @@ import time
 from flask import Flask, Response, render_template,jsonify, request
 from camera import Camera, list_available_devices
 import atexit, signal, sys
+
 app = Flask(__name__)
+app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
 
 camera = Camera()
 
