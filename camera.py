@@ -150,7 +150,7 @@ class Camera:
         self.running = False
         if self.thread:
             self.thread.join()
-        with self.lock():
+        with self.lock:
             if self.cap:
                 self.cap.release()
         
