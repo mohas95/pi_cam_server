@@ -33,7 +33,11 @@ camera = Camera()
 
 def generate_frames():
     while True:
-        frame = camera.get_frame()
+        frame = camera.get_jpg_frame()
+
+        if frame is None:
+            continue
+
         yield(b'--frame\r\n'
               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 

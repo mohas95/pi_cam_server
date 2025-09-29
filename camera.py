@@ -93,7 +93,8 @@ class Camera:
     def __init__(self, device="/dev/video0", codec = None, width= None, height = None, fps = None):
         self.thread = None
         self.cap = None
-        self.frame = None
+        self.frame_jpg = None
+        self.frame_raw = None
         self.running = False
         self.lock = threading.Lock()
         self.configure(device, codec, width, height, fps)
@@ -112,11 +113,13 @@ class Camera:
             if not ret:
                 continue
 
+            
             ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 95])
-            frame = buffer.tobytes()
+            frame_jpg = buffer.tobytes()
 
             with self.lock:
-                self.frame = frame
+                self.frame_jpg = frame_jpg
+                self.frame_raw = frame
 
 
     def get_config(self):
@@ -132,10 +135,14 @@ class Camera:
 
 
 
-    def get_frame(self):
+    def get_jpg_frame(self):
         with self.lock:
-            # return None if self.frame is None else self.frame.copy()
-            return self.frame
+            return None if self.frame_jpg is None else self.frame_jpg
+
+    def get_raw_frame(self):
+        with self.lock:
+            return None if self.frame_raw is None else self.frame_raw.copy()
+
 
     def configure(self, device=None, codec = None, width = None, height = None, fps = None):
 
