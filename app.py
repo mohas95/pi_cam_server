@@ -2,34 +2,21 @@ import cv2
 import time
 from flask import Flask, Response, render_template,jsonify, request
 from camera import Camera, list_available_devices
+import atexit, signal, sys
 
 app = Flask(__name__)
 
-# cams = list_available_devices()
-# for name, info in cams.items():
-#     print(f"{name} -> {info['device']}")
-#     for fmt in info["formats"]:
-#         print(f"  Codec: {fmt['codec']} ({fmt['desc']})")
-#         for res in fmt["resolutions"]:
-#             print(f"    {res}")
-
-
 camera = Camera()
 
-# def generate_frames():
-#     while True:
-#         frame = camera.get_frame()
+@atexit.register
+def cleanup():
+    camera.stop()
 
-#         if frame is None:
-#             continue
-        
-#         ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 95])
-#         frame = buffer.tobytes()
-#         yield(b'--frame\r\n'
-#               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+def handle_sigterm(signum, frame):
+    camera.stop()
+    sys.exit(0)
 
-
-
+signal.signal(signal.SIGTERM, handle_sigterm)
 
 def generate_frames():
     while True:
@@ -52,16 +39,13 @@ def current_config():
 
 @app.route('/video_feed')
 def video_feed():
-    return Response(generate_frames(), 
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
-
-
     # return Response(generate_frames(), 
-    #                 mimetype='multipart/x-mixed-replace; boundary=frame',
-    #                 headers={
-    #                     "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
-    #                     "Pragma": "no-cache"})
-
+    #                 mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(generate_frames(), 
+                    mimetype='multipart/x-mixed-replace; boundary=frame',
+                    headers={
+                        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+                        "Pragma": "no-cache"})
 
 
 @app.route("/devices")

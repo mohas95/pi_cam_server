@@ -146,6 +146,16 @@ class Camera:
             return None if self.frame_raw is None else self.frame_raw.copy()
 
 
+    def stop(self):
+        self.running = False
+        if self.thread:
+            self.thread.join()
+        with self.lock():
+            if self.cap:
+                self.cap.release()
+        
+        print("Camera stoppped and released")
+
     def configure(self, device=None, codec = None, width = None, height = None, fps = None):
 
         if self.running:
