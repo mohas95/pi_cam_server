@@ -1,7 +1,10 @@
 import cv2
 import numpy as np
 import time
-from flask import Flask, Response, render_template,jsonify, request
+from flask import Flask, Response, render_template,jsonify, request, flash, redirect, url_for
+import eventlet
+import subprocess
+
 from camera import Camera, list_available_devices
 import atexit, signal, sys
 
@@ -127,7 +130,74 @@ def info():
         "height": config.get("height"),
         "fps": config.get("fps")
     })
-   
+
+
+########################### wifi configuration
+@app.route("/restart", methods=["POST"])
+def restart_pi():
+    print("🔄 Restart requested!")
+    subprocess.Popen(["sudo", "reboot"])
+    return "Restarting...", 200
+
+@app.route("/configure_wifi", methods=["POST"])
+def configure_wifi():
+    ssid = request.form.get("ssid")
+    password = request.form.get("password")
+
+    if not ssid:
+        flash("⚠️ SSID is required.", "error")
+        return redirect(url_for("settings"))
+
+    try:
+        # Example using nmcli (you might adapt based on your setup)
+        subprocess.run(["nmcli", "dev", "wifi", "connect", ssid, "password", password], check=True)
+        flash(f"✅ Connected to {ssid}. Restarting system...", "success")
+    except subprocess.CalledProcessError as e:
+        flash(f"❌ Failed to connect to {ssid}: {e}", "error")
+        return redirect(url_for("settings"))
+
+    # ✅ Restart the Raspberry Pi
+    subprocess.Popen(["sudo", "reboot"])
+
+    return redirect(url_for("settings"))
+
+
+@app.route("/scan_wifi")
+def scan_wifi():
+    try:
+        # Force a fresh scan first
+        subprocess.call(["sudo", "nmcli", "dev", "wifi", "rescan"])
+
+        eventlet.sleep(2)  # Optional: slight delay to allow scan completion
+
+        result = subprocess.check_output(["sudo", "nmcli", "-t", "-f", "SSID,SIGNAL", "dev", "wifi"]).decode()
+
+        networks = []
+        for line in result.strip().split("\n"):
+            if line:
+                parts = line.split(":")
+                if len(parts) == 2:
+                    ssid, signal = parts
+                    if ssid:  # Avoid blank SSIDs
+                        networks.append({"ssid": ssid, "signal": signal})
+        return jsonify({"networks": networks})
+    except Exception as e:
+        print(f"⚠️ Wi-Fi scan failed: {e}")
+        return jsonify({"networks": []})
+
+@app.route("/current_wifi")
+def current_wifi():
+    try:
+        result = subprocess.check_output(["nmcli", "-t", "-f", "active,ssid", "dev", "wifi"]).decode()
+        for line in result.strip().split("\n"):
+            active, ssid = line.split(":")
+            if active == "yes":
+                return jsonify({"ssid": ssid})
+        return jsonify({"ssid": None})
+    except Exception as e:
+        print(f"⚠️ Failed to get current Wi-Fi: {e}")
+        return jsonify({"ssid": None})
+
 
 if __name__=="__main__":
     app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
