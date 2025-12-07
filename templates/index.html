@@ -299,11 +299,16 @@
                 const currentElem = document.getElementById('current_ssid');
                 if (!currentElem) return;
 
-                const response = await fetch('/current_wifi');
-                const data = await response.json();
-                const ssid = data.ssid || 'Not connected';
+                const resp_wifi = await fetch('/current_wifi');
+                const resp_ip = await fetch('/ip');
 
-                currentElem.textContent = ssid;
+                const data_wifi = await resp_wifi.json();
+                const data_ip = await resp_ip.json();
+
+                const ssid = data_wifi.ssid || 'Not connected';
+                const ip = data_ip.ip || '';
+
+                currentElem.textContent = `${ssid} (${ip})`;
 
             }
 
