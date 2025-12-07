@@ -10,6 +10,8 @@ import atexit, signal, sys
 
 app = Flask(__name__)
 app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
+app.secret_key = "supersecretkey" 
+
 
 camera = Camera()
 
