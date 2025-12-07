@@ -31,7 +31,7 @@ Supports **live MJPEG video streaming**, **lossless PNG snapshots**, and **raw N
 ### Install dependencies
 ```bash
 sudo apt update
-sudo apt install python3-opencv python3-numpy python3-flask python3-pip v4l-utils guinicorn
+sudo apt install python3-opencv python3-numpy python3-flask python3-pip python3-eventlet v4l-utils guinicorn
 ```
 ---
 
