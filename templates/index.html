@@ -45,10 +45,82 @@
                 font-family: monospace;
             }
 
+            /* Wifi Styling */
+            #wifi_section {
+                width: 90%;
+                max-width: 800px;
+                margin: 2em auto;
+                padding: 1em 1.5em;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                background: #fafafa;
+            }
+
+            #wifi_section h2 {
+                text-align: center;
+                margin-top: 0;
+                margin-bottom: 0.8em;
+                font-size: 1.4em;
+                color: #333;
+            }
+
+            .wifi-controls {
+                display: flex;
+                flex-direction: column;
+                gap: 0.8em;
+            }
+
+            .wifi-row {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.6em;
+                align-items: center;
+            }
+
+            .wifi-row label {
+                min-width: 70px;
+                font-weight: bold;
+            }
+
+            .wifi-row input,
+            .wifi-row select,
+            .wifi-row button {
+                padding: 0.4em 0.6em;
+                border-radius: 4px;
+                border: 1px solid #ccc;
+                flex: 1;
+            }
+
+            #wifi_current_ssid {
+                text-align: center;
+                margin-bottom: 1em;
+                font-size: 0.95em;
+                font-family: monospace;
+                color: #444;
+            }
+
+            button#wifi_submit,
+            button#refresh_wifi {
+                padding: 0.45em 0.9em;
+                border-radius: 4px;
+                border: none;
+                background: #3c73e9;
+                color: white;
+                cursor: pointer;
+            }
+
+            button#refresh_wifi {
+                background: #555;
+            }
+
+            button#wifi_submit:hover,
+            button#refresh_wifi:hover {
+                opacity: 0.9;
+            }
+
         </style>
-
-
     </head>
+    
     <body>
         <div id="current-config" class="status">
             Current: None
