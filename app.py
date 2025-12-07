@@ -152,7 +152,7 @@ def configure_wifi():
 
     try:
         # Example using nmcli (you might adapt based on your setup)
-        subprocess.run(["nmcli", "dev", "wifi", "connect", ssid, "password", password], check=True)
+        subprocess.run(["sudo", "nmcli", "dev", "wifi", "connect", ssid, "password", password], check=True)
         flash(f"✅ Connected to {ssid}. Restarting system...", "success")
     except subprocess.CalledProcessError as e:
         flash(f"❌ Failed to connect to {ssid}: {e}", "error")
