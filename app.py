@@ -135,6 +135,23 @@ def info():
 
 
 ########################### wifi configuration
+def get_lan_ip():
+    try:
+        out = subprocess.check_output(["hostname", "-I"]).decode().strip()
+        if out:
+            return out.split()[0]
+        
+    except Exception:
+        return None
+
+@app.route("/ip")
+def ip_route():
+    ip = get_lan_ip()
+
+    if not ip:
+        return jsonify({"error": "could not determine IP address"}), 500
+    return jsonify({"ip":ip})
+
 @app.route("/restart", methods=["POST"])
 def restart_pi():
     print("🔄 Restart requested!")
