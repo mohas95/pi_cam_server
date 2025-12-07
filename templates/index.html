@@ -189,7 +189,6 @@
                         }
                     );
                 }
-
             }
 
 
@@ -220,13 +219,104 @@
                 document.getElementById("current-config").textContent = `Current: ${cfg.device}, ${cfg.codec}, ${cfg.width}x${cfg.height} @ ${cfg.fps}fps`;
             }
 
-            document.getElementById("device").addEventListener("change", updateCodecs);
-            document.getElementById("codec").addEventListener("change", updateResolutions);
-            document.getElementById("resolution").addEventListener("change", updateFPS);
 
+            // Wifi Functions
+
+            async function getCurrentWiFi() {
+                
+                const currentElem = document.getElementById('current_ssid');
+                if (!currentElem) return;
+
+                const response = await fetch('/current_wifi');
+                const data = await response.json();
+                const ssid = data.ssid || 'Not connected';
+
+                currentElem.textContent = ssid;
+
+                // fetch('/current_wifi')
+                //     .then(response => response.json())
+                //     .then(data => {
+                //         const ssid = data.ssid || 'Not connected';
+                //         if (currentElem) currentElem.textContent = ssid;
+                //     });
+            }
+
+            async function scanWiFi() {
+                const dropdown = document.getElementById('wifi_dropdown');
+                if(!dropdown) return;
+                const response = await fetch('/scan_wifi');
+                const data = await response.json();
+
+                dropdown.innerHTML = '<option value="">-- Select a Network --</option>';
+                data.networks.forEach(network => {
+                    const option = document.createElement('option');
+                    option.value = network.ssid;
+                    option.textContent = `${network.ssid} (${network.signal}%)`;
+                    dropdown.appendChild(option);
+                });                
+                // fetch('/scan_wifi')
+                //     .then(response => response.json())
+                //     .then(data => {
+                //         const dropdown = document.getElementById('wifi_dropdown');
+                //         if (!dropdown) return;
+                //         dropdown.innerHTML = '<option value="">-- Select a Network --</option>';
+                //         data.networks.forEach(network => {
+                //             const option = document.createElement('option');
+                //             option.value = network.ssid;
+                //             option.textContent = `${network.ssid} (${network.signal}%)`;
+                //             dropdown.appendChild(option);
+                //         });
+                //     });
+            }
+
+
+            //  Camera event listers
+            const deviceSel = document.getElementById("device");
+            const codecSel = document.getElementById("codec");
+            const resSel = document.getElementById("resolution");
+
+            if (deviceSel){
+                deviceSel.addEventListener("change", updateCodecs);
+            }
             
+            if (codecSel){
+                codecSel.addEventListener("change", updateResolutions);
+            }
+
+            if(resSel){
+                resSel.addEventListener("change", updateFPS);
+            }
+            
+
+            // Wifi event listener
+            const refreshBtn = document.getElementById('refresh_wifi');
+            if(refreshBtn){
+                refreshBtn.addEventListener('click', scanWiFi);
+            }
+
+            const wifiDropdown = document.getElementById('wifi_dropdown');
+            if(wifiDropdown){
+                wifiDropdown.addEventListener('change', function () {
+                    const selectedSSID = this.value;
+                    if (selectedSSID) {
+                        const ssidInput = document.getElementById('ssid_input');
+                        if (ssidInput) ssidInput.value = selectedSSID;
+                    }
+                });
+            }
+
+            const wifiForm = document.getElementById('wifi_form');
+            if (wifiForm) {
+                wifiForm.addEventListener('submit', function (e) {
+                    alert("Wi-Fi settings saved. The Raspberry Pi will now restart to apply changes. Please reconnect once it's back online.");
+                });
+            }            
+
+            // Initialization
             loadDevices();
-            refreshConfig()
+            refreshConfig();
+            scanWiFi();
+            getCurrentWiFi();
 
         </script>
     </body>
