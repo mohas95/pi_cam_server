@@ -233,12 +233,6 @@
 
                 currentElem.textContent = ssid;
 
-                // fetch('/current_wifi')
-                //     .then(response => response.json())
-                //     .then(data => {
-                //         const ssid = data.ssid || 'Not connected';
-                //         if (currentElem) currentElem.textContent = ssid;
-                //     });
             }
 
             async function scanWiFi() {
@@ -254,19 +248,6 @@
                     option.textContent = `${network.ssid} (${network.signal}%)`;
                     dropdown.appendChild(option);
                 });                
-                // fetch('/scan_wifi')
-                //     .then(response => response.json())
-                //     .then(data => {
-                //         const dropdown = document.getElementById('wifi_dropdown');
-                //         if (!dropdown) return;
-                //         dropdown.innerHTML = '<option value="">-- Select a Network --</option>';
-                //         data.networks.forEach(network => {
-                //             const option = document.createElement('option');
-                //             option.value = network.ssid;
-                //             option.textContent = `${network.ssid} (${network.signal}%)`;
-                //             dropdown.appendChild(option);
-                //         });
-                //     });
             }
 
 
