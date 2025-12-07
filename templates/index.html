@@ -45,10 +45,82 @@
                 font-family: monospace;
             }
 
+            /* Wifi Styling */
+            #wifi_section {
+                width: 90%;
+                max-width: 800px;
+                margin: 2em auto;
+                padding: 1em 1.5em;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                background: #fafafa;
+            }
+
+            #wifi_section h2 {
+                text-align: center;
+                margin-top: 0;
+                margin-bottom: 0.8em;
+                font-size: 1.4em;
+                color: #333;
+            }
+
+            .wifi-controls {
+                display: flex;
+                flex-direction: column;
+                gap: 0.8em;
+            }
+
+            .wifi-row {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.6em;
+                align-items: center;
+            }
+
+            .wifi-row label {
+                min-width: 70px;
+                font-weight: bold;
+            }
+
+            .wifi-row input,
+            .wifi-row select,
+            .wifi-row button {
+                padding: 0.4em 0.6em;
+                border-radius: 4px;
+                border: 1px solid #ccc;
+                flex: 1;
+            }
+
+            #wifi_current_ssid {
+                text-align: center;
+                margin-bottom: 1em;
+                font-size: 0.95em;
+                font-family: monospace;
+                color: #444;
+            }
+
+            button#wifi_submit,
+            button#refresh_wifi {
+                padding: 0.45em 0.9em;
+                border-radius: 4px;
+                border: none;
+                background: #3c73e9;
+                color: white;
+                cursor: pointer;
+            }
+
+            button#refresh_wifi {
+                background: #555;
+            }
+
+            button#wifi_submit:hover,
+            button#refresh_wifi:hover {
+                opacity: 0.9;
+            }
+
         </style>
-
-
     </head>
+    
     <body>
         <div id="current-config" class="status">
             Current: None
@@ -81,6 +153,28 @@
             <button onclick="applyConfig()">Configure</button>
 
         </div>
+
+        <h2>Wi-Fi Configuration</h2>
+        <form id="wifi_form" action="{{ url_for('configure_wifi') }}" method="POST">
+            <div id="current_ssid" style="margin-top: 10px; font-weight: bold;">Connected to: <span id="current_ssid">Loading...</span></div>
+            
+            <label for="ssid_input">SSID:</label>
+            <input type="text" id="ssid_input" name="ssid" placeholder="Select or type SSID">
+
+            <select id="wifi_dropdown">
+                <option value="">-- Select a Network --</option>
+            </select>
+
+            <button type="button" id="refresh_wifi">🔄 Scan Wi-Fi</button>
+
+            <br><br>
+            <label for="wifi_password">Password:</label>
+            <input type="password" id="wifi_password" name="password" placeholder="Enter Wi-Fi password">
+
+            <br><br>
+            <button type="submit">Save Wi-Fi Config</button>
+        </form>        
+        
 
         <script>
             let devices={};
@@ -167,7 +261,6 @@
                         }
                     );
                 }
-
             }
 
 
@@ -198,13 +291,85 @@
                 document.getElementById("current-config").textContent = `Current: ${cfg.device}, ${cfg.codec}, ${cfg.width}x${cfg.height} @ ${cfg.fps}fps`;
             }
 
-            document.getElementById("device").addEventListener("change", updateCodecs);
-            document.getElementById("codec").addEventListener("change", updateResolutions);
-            document.getElementById("resolution").addEventListener("change", updateFPS);
 
+            // Wifi Functions
+
+            async function getCurrentWiFi() {
+                
+                const currentElem = document.getElementById('current_ssid');
+                if (!currentElem) return;
+
+                const response = await fetch('/current_wifi');
+                const data = await response.json();
+                const ssid = data.ssid || 'Not connected';
+
+                currentElem.textContent = ssid;
+
+            }
+
+            async function scanWiFi() {
+                const dropdown = document.getElementById('wifi_dropdown');
+                if(!dropdown) return;
+                const response = await fetch('/scan_wifi');
+                const data = await response.json();
+
+                dropdown.innerHTML = '<option value="">-- Select a Network --</option>';
+                data.networks.forEach(network => {
+                    const option = document.createElement('option');
+                    option.value = network.ssid;
+                    option.textContent = `${network.ssid} (${network.signal}%)`;
+                    dropdown.appendChild(option);
+                });                
+            }
+
+
+            //  Camera event listers
+            const deviceSel = document.getElementById("device");
+            const codecSel = document.getElementById("codec");
+            const resSel = document.getElementById("resolution");
+
+            if (deviceSel){
+                deviceSel.addEventListener("change", updateCodecs);
+            }
             
+            if (codecSel){
+                codecSel.addEventListener("change", updateResolutions);
+            }
+
+            if(resSel){
+                resSel.addEventListener("change", updateFPS);
+            }
+            
+
+            // Wifi event listener
+            const refreshBtn = document.getElementById('refresh_wifi');
+            if(refreshBtn){
+                refreshBtn.addEventListener('click', scanWiFi);
+            }
+
+            const wifiDropdown = document.getElementById('wifi_dropdown');
+            if(wifiDropdown){
+                wifiDropdown.addEventListener('change', function () {
+                    const selectedSSID = this.value;
+                    if (selectedSSID) {
+                        const ssidInput = document.getElementById('ssid_input');
+                        if (ssidInput) ssidInput.value = selectedSSID;
+                    }
+                });
+            }
+
+            const wifiForm = document.getElementById('wifi_form');
+            if (wifiForm) {
+                wifiForm.addEventListener('submit', function (e) {
+                    alert("Wi-Fi settings saved. The Raspberry Pi will now restart to apply changes. Please reconnect once it's back online.");
+                });
+            }            
+
+            // Initialization
             loadDevices();
-            refreshConfig()
+            refreshConfig();
+            scanWiFi();
+            getCurrentWiFi();
 
         </script>
     </body>
