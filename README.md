@@ -26,7 +26,8 @@ Supports **live MJPEG video streaming**, **lossless PNG snapshots**, and **raw N
 - OpenCV (`cv2`)  
 - NumPy  
 - Flask  
-- Gunicorn (for production with systemd) 
+- Gunicorn (for production with systemd)
+- eventlet (for front end event handling) 
 
 ### Install dependencies
 ```bash
@@ -34,6 +35,18 @@ sudo apt update
 sudo apt install python3-opencv python3-numpy python3-flask python3-pip python3-eventlet v4l-utils guinicorn
 ```
 ---
+
+### Optional
+- [Raspberry pi auto hotspot script](https://www.raspberryconnect.com/projects/65-raspberrypi-hotspot-accesspoints/203-automated-switching-accesspoint-wifi-network) (Useful for connecting pi to network)
+
+``` bash
+cd
+curl "https://www.raspberryconnect.com/images/scripts/AccessPopup.tar.gz" -o AccessPopup.tar.gz
+tar -xvf ./AccessPopup.tar.gz
+cd AccessPopup
+sudo ./installconfig.sh
+# Follow installer script prompts
+```
 
 ## Running the Server
 
