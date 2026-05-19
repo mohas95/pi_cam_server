@@ -131,7 +131,7 @@
 
         <div class="controls">
             <!-- <label for="device">Device: </label>  -->
-            <select id="device">
+            <select id="device_id">
                 <option value="" disabled selected>Select device</option>
             </select>
 
@@ -183,14 +183,14 @@
                 const res = await fetch("/devices");
                 devices = await res.json();
 
-                const deviceSel = document.getElementById("device");
+                const deviceSel = document.getElementById("device_id");
                 deviceSel.innerHTML="";
 
-                for (const [name, info] of Object.entries(devices)){
+                for (const [dev_id, info] of Object.entries(devices)){
                     const opt = document.createElement("option");
                     opt.value = info.device;
-                    opt.dataset.name = name;
-                    opt.textContent = `${name} (${info.device})`;
+                    opt.dataset.dev_id = dev_id;
+                    opt.textContent = `${info.device} (${dev_id})`;
                     deviceSel.appendChild(opt);
                 }
                 updateCodecs();
@@ -198,9 +198,9 @@
 
 
             function updateCodecs(){
-                const selected_device = document.getElementById("device").selectedOptions[0]
-                const devName = selected_device.dataset.name;
-                const devInfo = devices[devName];
+                const selected_device = document.getElementById("device_id").selectedOptions[0]
+                const devID = selected_device.dataset.dev_id;
+                const devInfo = devices[devID];
                 const codecSel = document.getElementById("codec");
                 codecSel.innerHTML = "";
 
@@ -217,9 +217,9 @@
             }
 
             function updateResolutions(){
-                const selected_device = document.getElementById("device").selectedOptions[0]
-                const devName = selected_device.dataset.name;
-                const devInfo = devices[devName];
+                const selected_device = document.getElementById("device_id").selectedOptions[0]
+                const devID = selected_device.dataset.dev_id;
+                const devInfo = devices[devID];
                 const codec = document.getElementById("codec").value;
                 const resSel = document.getElementById("resolution");
                 resSel.innerHTML = "";
@@ -241,9 +241,9 @@
 
 
             function updateFPS(){
-                const selected_device = document.getElementById("device").selectedOptions[0]
-                const devName = selected_device.dataset.name;
-                const devInfo = devices[devName];
+                const selected_device = document.getElementById("device_id").selectedOptions[0]
+                const devID = selected_device.dataset.dev_id;
+                const devInfo = devices[devID];
                 const codec = document.getElementById("codec").value;
                 const res = document.getElementById("resolution").value;
                 const fpsSel = document.getElementById("fps");
@@ -265,7 +265,7 @@
 
 
             async function applyConfig() {
-                const device = document.getElementById("device").value;
+                const device_id = document.getElementById("device_id").value;
                 const codec = document.getElementById("codec").value;
                 const resolution = document.getElementById("resolution").value;
                 const fps = document.getElementById("fps").value;
@@ -274,7 +274,7 @@
                 await fetch("/configure",{
                         method: "POST",
                         headers: {"Content-Type": "application/json"},
-                        body: JSON.stringify({device, codec, resolution, fps})
+                        body: JSON.stringify({device_id, codec, resolution, fps})
                     }
                 );
 
@@ -288,7 +288,7 @@
                 const res = await fetch("/current_config");
                 const cfg = await res.json();
                 
-                document.getElementById("current-config").textContent = `Current: ${cfg.device}, ${cfg.codec}, ${cfg.width}x${cfg.height} @ ${cfg.fps}fps`;
+                document.getElementById("current-config").textContent = `Current: ${cfg.device_id}, ${cfg.codec}, ${cfg.width}x${cfg.height} @ ${cfg.fps}fps`;
             }
 
 

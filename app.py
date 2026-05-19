@@ -93,7 +93,7 @@ def devices():
 @app.route("/configure", methods=["POST"])
 def configure():
     data = request.json
-    dev = data.get("device")
+    dev_id = data.get("device_id")
     codec = data.get("codec")
     res = data.get("resolution")
     fps = data.get("fps")
@@ -108,7 +108,7 @@ def configure():
     else:
         fps = None
 
-    camera.configure(device= dev, codec = codec, width=width, height=height, fps = fps)
+    camera.configure(device= dev_id, codec = codec, width=width, height=height, fps = fps)
     
     return jsonify({"status":"ok"})
 
@@ -118,15 +118,15 @@ def info():
     config = camera.get_config()
 
     devices = list_available_devices()
-    device_name = None
-    for name, info in devices.items():
-        if info["device"] == config.get("device"):
-            device_name = name
+    device = None
+    for dev_id, info in devices.items():
+        if dev_id == config.get("device_id"):
+            device = info["device"]
             break
 
     return jsonify({
-        "device_name": device_name or "unknown",
-        "device": config.get("device"),
+        "device": device or "unknown",
+        "device_id": config.get("device_id"),
         "codec": config.get("codec"),
         "width": config.get("width"),
         "height": config.get("height"),

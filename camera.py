@@ -1,4 +1,5 @@
 import cv2
+import depthai as dai
 import threading
 import time
 
@@ -12,6 +13,25 @@ def list_available_devices(skip_non_device=True):
         skip_keywords = ["pisp", "bcm2835", "hevc", "codec"]
     else:
         skip_keywords = []
+
+    depthai_devices = dai.Device.getAllAvailableDevices()
+
+    # print(depthai_devices)
+   
+    for dev in depthai_devices:
+        
+
+        with dai.Device(dev) as device:
+            cam_modules = device.getConnectedCameras()
+            eepromData = device.readCalibration2().getEepromData()
+
+            product_name = f"{eepromData.productName}_{dev.name}" if eepromData.productName != "" else f"depthai device_{dev.name}"
+
+            cameras[dev.getDeviceId()] = {"device":product_name,
+                                          "board": eepromData.boardName,
+                                          "number of cameras": len(cam_modules),
+                                          "type": "depthai"}
+
 
     for dev in glob.glob("/dev/video*"):
         try:
@@ -77,14 +97,16 @@ def list_available_devices(skip_non_device=True):
                         fps_val= float(fps_match.group(1))
                         current_res["fps"].append(fps_val)
 
-            cameras[name] = {
-                "device": dev,
-                "formats": formats
+            cameras[dev] = {
+                "device": name,
+                "formats": formats,
+                "type": "v4l2"
             }
 
         except subprocess.CalledProcessError:
             continue
-
+    
+    # print(cameras)
     return cameras
 
 
@@ -121,7 +143,7 @@ class Camera:
         with self.lock:
 
             return {
-                "device": self.device,
+                "device_id": self.device,
                 "codec": self.codec,
                 "width": self.width,
                 "height": self.height,
