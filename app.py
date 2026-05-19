@@ -12,7 +12,7 @@ app = Flask(__name__)
 app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
 app.secret_key = "supersecretkey" 
 
-
+## TODO: Create an initialization pipeline to prevent startup bugs 
 camera = Camera()
 
 @atexit.register
