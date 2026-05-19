@@ -30,7 +30,7 @@ class DepthAIStream:
         self.lock = threading.Lock()
         
     ##TODO: Change to configure for better api calls
-    def start(self):
+    def configure(self):
 
         with dai.Device(self.device_info) as device:
             self.pipeline = dai.Pipeline(device)
