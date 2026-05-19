@@ -2,7 +2,7 @@
 
 ### Author: Mohamed Debbagh (mohas95)
 
-This project creates a simple flask + openCV server for streaming video and accessing camera frames on a rasberry pi (or linux/debian system)
+This project creates a simple flask + openCV server for streaming video and accessing camera frames on a rasberry pi (or linux/debian system). Integrations with depthai cameras in progres...
 
 Supports **live MJPEG video streaming**, **lossless PNG snapshots**, and **raw NumPy frame data** for scientific/computer-vision clients.  
 
@@ -130,7 +130,7 @@ GET /current_config
 - returns
 ```json
 {
-  "device": "/dev/video0",
+  "device_id": "/dev/video0",
   "codec": "MJPG",
   "width": 1280,
   "height": 720,
@@ -147,8 +147,8 @@ GET /devices
 
 ```json
 {
-  "C922_Pro_Stream_Webcam": {
-    "device": "/dev/video0",
+  "/dev/video0": {
+    "device": "C922_Pro_Stream_Webcam",
     "formats": [
       {
         "codec": "MJPG",
@@ -172,7 +172,7 @@ POST /configure
 - example of configuration to send:
 ```json
 {
-  "device": "/dev/video0",
+  "device_id": "/dev/video0",
   "codec": "MJPG",
   "resolution": "1280x720",
   "fps": 30
@@ -186,8 +186,14 @@ GET /info
 ```
 - gets info about the current setup for meta data purposes
 ```json
-{"codec":"YUYV","device":"/dev/video0","device_name":"C922 Pro Stream Webcam","fps":30.0,"height":480.0,"width":640.0}
+{"codec":"YUYV","device_id":"/dev/video0","device":"C922 Pro Stream Webcam","fps":30.0,"height":480.0,"width":640.0}
 ```
 
 
 --- 
+
+## Change log
+
+### 0.01
+- start integration with depthai cameras
+- change device identifier to device_id rather than device
