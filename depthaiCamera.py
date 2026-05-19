@@ -1,0 +1,1 @@
+#TODO: Depthai pipeline integration: Camera and pipeline loading class
