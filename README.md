@@ -2,7 +2,7 @@
 
 ### Author: Mohamed Debbagh (mohas95)
 
-This project creates a simple flask + openCV server for streaming video and accessing camera frames on a rasberry pi (or linux/debian system). Integrations with depthai cameras in progres...
+This project creates a simple flask + openCV server for streaming video and accessing camera frames of standard V4l2 protocol usb cameras and luxionus depthai cameras on a rasberry pi (or linux/debian system).
 
 Supports **live MJPEG video streaming**, **lossless PNG snapshots**, and **raw NumPy frame data** for scientific/computer-vision clients.  
 
@@ -15,7 +15,8 @@ Supports **live MJPEG video streaming**, **lossless PNG snapshots**, and **raw N
 - Get **raw NumPy frame data** (`/raw_frame`)  
 - Query and change camera configuration (`/current_config`, `/configure`)  
 - List available devices, codecs, resolutions, and FPS (`/devices`)  
-- Graceful shutdown (releases camera device when service stops)  
+- Graceful shutdown (releases camera device when service stops)
+- Create custom pipelines for depthai cameras  
 - Works with **browsers**, **Python clients**, or custom UIs  
 
 ---
@@ -180,20 +181,15 @@ POST /configure
 ```
 - Returns { "status": "ok" } if successful
 
-### 7. info
-```bash
-GET /info
-```
-- gets info about the current setup for meta data purposes
-```json
-{"codec":"YUYV","device_id":"/dev/video0","device":"C922 Pro Stream Webcam","fps":30.0,"height":480.0,"width":640.0}
-```
 
 
 --- 
 
 ## Change log
 
-### 0.01
+### 0.0.1
 - start integration with depthai cameras
+- access control to prevent pipeline breaking or conflicting stream access
+- fixes to initialization protocol
+- custom pipeline builder integrations for depthai cameras
 - change device identifier to device_id rather than device
