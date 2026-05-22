@@ -9,8 +9,12 @@ def build_rgb_pipeline(pipeline, device, size, fps):
     for socket in sockets:
         cam = pipeline.create(dai.node.Camera).build(socket)
 
-        output_queues[str(socket)] = cam.requestFullResolutionOutput().createOutputQueue()
-
+        # output_queues[str(socket)] = cam.requestFullResolutionOutput().createOutputQueue()
+        output_queues[str(socket)] = cam.requestOutput(size, type=dai.ImgFrame.Type.NV12, 
+                              resizeMode=dai.ImgResizeMode.CROP, 
+                              enableUndistortion=True,
+                              fps=fps).createOutputQueue()
+    
 
     # cam = pipeline.create(dai.node.Camera).build(dai.CameraBoardSocket.CAM_A)
     # output = cam.requestOutput(size, type=dai.ImgFrame.Type.NV12, 

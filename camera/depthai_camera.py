@@ -25,12 +25,12 @@ class DepthAICamera:
 
     def get_config(self):
         with self.lock:
-            device_id = self.device.getDeviceId()
+            # device_id = self.device.getDeviceId()
             cam_modules = self.device.getConnectedCameras()
             eepromData = self.device.readCalibration2().getEepromData()
             product_name = f"{eepromData.productName}" if eepromData.productName != "" else f"depthai_device"
 
-            out = {"device_id":device_id,
+            out = {"device_id":self.device_id,
                    "device":product_name,
                    "board":eepromData.boardName,
                    "num_cam_modules": len(cam_modules),

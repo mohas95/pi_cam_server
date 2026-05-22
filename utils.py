@@ -177,11 +177,12 @@ def list_available_devices(skip_non_device=True, active_depthai_cameras = None):
 
         # with dai.Pipeline() as temporary_pipeline:
         with dai.Device(dev_info) as temporary_device:
-            temporary_pipeline = dai.Pipeline(temporary_device)
 
             pipeline_info={}
 
             for pipeline_name, pipeline_builder in AVAILABLE_PIPELINES.items():
+                temporary_pipeline = dai.Pipeline(temporary_device)
+
 
                 output_streams = pipeline_builder.build(temporary_pipeline, temporary_device)
                 pipeline_info[pipeline_name] =  list(output_streams.keys())

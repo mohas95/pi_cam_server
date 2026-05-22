@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-import os, json, time,threading
+import os, json, time,threading, gc
 from flask import Flask, Response, render_template,jsonify, request, flash, redirect, url_for
 import eventlet
 import subprocess
@@ -26,14 +26,20 @@ camera_lock = threading.Lock()
 last_camera_config = load_config_file(CAMERA_CONFIG_PATH)
 available_devices = list_available_devices()
 
-if validate_camera_config(last_camera_config,available_devices):
-    selected_camera, ACTIVE_DEPTHAI_STREAMS= initialize_cameras(last_camera_config)
-    print("Last configuration validated: loading camera")
-else:
-    ACTIVE_DEPTHAI_STREAMS = {}
-    selected_camera = None
-    print("Previous camera configuration not found, please select camera")
+ACTIVE_DEPTHAI_STREAMS = {}
+selected_camera = None
 
+if validate_camera_config(last_camera_config, available_devices):
+    try:
+        selected_camera, ACTIVE_DEPTHAI_STREAMS = initialize_cameras(last_camera_config)
+        print("Last configuration loaded")
+    except Exception as e:
+        print(f"Could not auto-load last camera config: {e}")
+        print("Starting without camera. Configure manually from UI.")
+        selected_camera = None
+        ACTIVE_DEPTHAI_STREAMS = {}
+else:
+    print("Previous camera configuration invalid. Configure manually.")
 
 @atexit.register
 def cleanup():
@@ -215,7 +221,10 @@ def configure():
             if selected_camera:
                 selected_camera.stop()
                 ACTIVE_DEPTHAI_STREAMS.clear()
-
+        gc.collect()
+        time.sleep(1.0)
+        
+        with camera_lock:
             selected_camera = V4l2Camera(device= dev_id, codec = codec, width=width, height=height, fps = fps)
     
     elif camera_type == "depthai":
@@ -232,17 +241,27 @@ def configure():
                 selected_camera.stop()
                 ACTIVE_DEPTHAI_STREAMS.clear()
 
-            pipeline_info={}
-            
-            with dai.Device(dai.DeviceInfo(dev_id)) as temporary_device:
+        gc.collect()
+        time.sleep(1.0)
+
+
+        pipeline_info={}
+        
+        with dai.Device(dai.DeviceInfo(dev_id)) as temporary_device:
+
+
+            for temp_pipeline_name, temp_pipeline_builder in AVAILABLE_PIPELINES.items():
+
                 temporary_pipeline = dai.Pipeline(temporary_device)
 
 
-                for temp_pipeline_name, temp_pipeline_builder in AVAILABLE_PIPELINES.items():
-
-                    output_streams = temp_pipeline_builder.build(temporary_pipeline, temporary_device)
-                    pipeline_info[temp_pipeline_name] =  list(output_streams.keys())
-            
+                output_streams = temp_pipeline_builder.build(temporary_pipeline, temporary_device)
+                pipeline_info[temp_pipeline_name] =  list(output_streams.keys())
+        
+        gc.collect()
+        time.sleep(1.0)
+        
+        with camera_lock:
             selected_camera = DepthAICamera(device_id=dev_id, pipeline_builder=pipeline_builder)
         
             ACTIVE_DEPTHAI_STREAMS[dev_id] = {"dev":selected_camera,
