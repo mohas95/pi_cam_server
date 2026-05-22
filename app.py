@@ -48,7 +48,7 @@ def handle_sigterm(signum, frame):
 
 signal.signal(signal.SIGTERM, handle_sigterm)
 
-def generate_frames():
+def generate_frames(stream = None):
     try:
         while True:
             with camera_lock:
@@ -56,16 +56,16 @@ def generate_frames():
                 active_streams = dict(ACTIVE_DEPTHAI_STREAMS)
             if cam is None:
                 return
+            
+            current_stream = stream
 
             if isinstance(cam,DepthAICamera):
-                dev_id = cam.device_id
-                stream_info = active_streams.get(dev_id)
-
-                if stream_info is None:
-                    continue
+                if current_stream is None:
+                    dev_id = cam.device_id
+                    current_stream = active_streams.get(dev_id,{}).get("selected_stream")
                 
-                frame = cam.get_jpg_frame(stream =stream_info["selected_stream"])
-            else:
+                frame = cam.get_jpg_frame(stream=current_stream)
+            elif isinstance(cam,V4l2Camera):
                 frame = cam.get_jpg_frame()
             
 
@@ -88,10 +88,13 @@ def index():
 
 @app.route('/video_feed')
 def video_feed():
+
+    stream = request.args.get("stream")
+
     with camera_lock:
         cam = selected_camera
     if cam:
-        return Response(generate_frames(), 
+        return Response(generate_frames(stream), 
                         mimetype='multipart/x-mixed-replace; boundary=frame',
                         headers={
                             "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
@@ -101,10 +104,27 @@ def video_feed():
 
 @app.route("/lossless_frame")
 def lossless_frame():
+
+    stream = request.args.get("stream")
+
     with camera_lock:
         cam = selected_camera
-    if cam:
-        frame=cam.get_raw_frame()
+        active_streams = dict(ACTIVE_DEPTHAI_STREAMS)
+
+    if cam is None:
+        return jsonify({"status":"No camera is initialized"})
+
+    try:
+        if isinstance(cam, DepthAICamera):
+            if stream is None:
+                dev_id = cam.device_id
+                stream = active_streams.get(dev_id,{}).get("selected_stream")
+
+            frame = cam.get_raw_frame(stream=stream)
+
+        elif isinstance(cam, V4l2Camera):
+            frame=cam.get_raw_frame()
+        
         if frame is None:
             return jsonify({"error": "no raw frame available"}), 500
         
@@ -114,16 +134,33 @@ def lossless_frame():
             return jsonify({"error": "encoding failed"}), 500
 
         return Response(buf.tobytes(), mimetype="image/png")
-    else:
-        return jsonify({"status":"No camera is initialized"})
+    except Exception as e:
+        print(e)
+        return jsonify({"error":str(e)}), 500
 
 
 @app.route("/raw_frame")
 def raw_frame():
+    stream = request.args.get("stream")
+
+
     with camera_lock:
         cam = selected_camera
-    if cam:
-        frame=cam.get_raw_frame()
+        active_streams = dict(ACTIVE_DEPTHAI_STREAMS)
+
+    if cam is None:
+        return jsonify({"status":"No camera is initialized"})
+
+    try:
+
+        if isinstance(cam, DepthAICamera):
+            if stream is None:
+                dev_id = cam.device_id
+                stream = active_streams.get(dev_id,{}).get("selected_stream")
+            frame=cam.get_raw_frame(stream=stream)
+        elif isinstance(cam,V4l2Camera):
+            frame=cam.get_raw_frame()
+        
         if frame is None:
             return jsonify({"error": "no raw frame available"}), 500
 
@@ -138,8 +175,9 @@ def raw_frame():
         resp.headers["X-Dtype"] = dtype
 
         return resp
-    else:
-        return jsonify({"status":"No camera is initialized"})
+    except Exception as e:
+        print(e)
+        return jsonify({"error":str(e)}), 500
 
 
 @app.route("/devices")
