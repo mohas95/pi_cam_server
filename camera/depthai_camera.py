@@ -36,7 +36,7 @@ class DepthAICamera:
                    "num_cam_modules": len(cam_modules),
                    "cam_modules": [str(cam) for cam in cam_modules],
                    "pipeline":self.pipeline_builder.name,
-                   "output_streams":self.pipeline_builder.output_streams
+                   "output_streams":list(self.queues.keys())
                    }
 
             return out
@@ -122,21 +122,6 @@ class DepthAICamera:
         self.device_id = None
         self.queues = {}
         self.latest_frames = {}
-
-
-    # def stop(self):
-    #     self.running = False
-
-    #     if self.pipeline:
-    #         self.pipeline.stop()
-    #         self.pipeline = None
-    #     if self.device:
-    #         self.device.close()
-    #         self.device = None
-    #     if self.thread:
-    #         self.thread.join(timeout=2)
-    #         self.thread = None
-
 
 
 

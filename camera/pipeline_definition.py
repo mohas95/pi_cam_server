@@ -6,7 +6,6 @@ from typing import Callable
 class PipelineDefinition:
     name: str
     build_fn: Callable
-    output_streams: list[str]
     description: str = ""
     default_params: dict = field(default_factory=dict)
 

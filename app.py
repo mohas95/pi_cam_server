@@ -4,6 +4,7 @@ import os, json, time,threading
 from flask import Flask, Response, render_template,jsonify, request, flash, redirect, url_for
 import eventlet
 import subprocess
+import depthai as dai
 
 from utils import list_available_devices, load_config_file, save_camera_config, initialize_cameras, validate_camera_config
 
@@ -230,10 +231,23 @@ def configure():
             if selected_camera:
                 selected_camera.stop()
                 ACTIVE_DEPTHAI_STREAMS.clear()
+
+            pipeline_info={}
+            
+            with dai.Device(dai.DeviceInfo(dev_id)) as temporary_device:
+                temporary_pipeline = dai.Pipeline(temporary_device)
+
+
+                for temp_pipeline_name, temp_pipeline_builder in AVAILABLE_PIPELINES.items():
+
+                    output_streams = temp_pipeline_builder.build(temporary_pipeline, temporary_device)
+                    pipeline_info[temp_pipeline_name] =  list(output_streams.keys())
             
             selected_camera = DepthAICamera(device_id=dev_id, pipeline_builder=pipeline_builder)
         
-            ACTIVE_DEPTHAI_STREAMS[dev_id] = {"dev":selected_camera, "selected_stream": selected_stream}
+            ACTIVE_DEPTHAI_STREAMS[dev_id] = {"dev":selected_camera,
+                                              "selected_stream": selected_stream,
+                                              "pipelines":pipeline_info}
 
     save_camera_config(CAMERA_CONFIG_PATH,data)
 
