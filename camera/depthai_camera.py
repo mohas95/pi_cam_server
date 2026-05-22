@@ -8,6 +8,7 @@ from camera.pipelines.rgb import RGB_PIPELINE
 class DepthAICamera:
     def __init__(self, device_id=None, pipeline_builder = RGB_PIPELINE):
         
+        self.device_id = device_id
         self.device_info = None
         self.device = None
         self.pipeline_builder = None
@@ -45,7 +46,7 @@ class DepthAICamera:
 
         if self.running:
             self.stop()
-
+        self.device_id = device_id
         self.device_info = dai.DeviceInfo(device_id) if device_id else None
         self.pipeline_builder = pipeline_builder or RGB_PIPELINE
         self.device = dai.Device(self.device_info) if self.device_info else dai.Device()
@@ -94,19 +95,47 @@ class DepthAICamera:
 
 
             return None if frame is None else frame.copy()
-    
+
     def stop(self):
         self.running = False
 
-        if self.pipeline:
-            self.pipeline.stop()
-            self.pipeline = None
-        if self.device:
-            self.device.close()
-            self.device = None
         if self.thread:
             self.thread.join(timeout=2)
             self.thread = None
+
+        if self.pipeline:
+            try:
+                self.pipeline.stop()
+            except Exception as e:
+                print(e)
+
+            self.pipeline = None
+
+        if self.device:
+            try:
+                self.device.close()
+            except Exception as e:
+                print(e)
+
+            self.device = None
+
+        self.device_id = None
+        self.queues = {}
+        self.latest_frames = {}
+
+
+    # def stop(self):
+    #     self.running = False
+
+    #     if self.pipeline:
+    #         self.pipeline.stop()
+    #         self.pipeline = None
+    #     if self.device:
+    #         self.device.close()
+    #         self.device = None
+    #     if self.thread:
+    #         self.thread.join(timeout=2)
+    #         self.thread = None
 
 
 

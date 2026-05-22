@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-import os, json, time
+import os, json, time,threading
 from flask import Flask, Response, render_template,jsonify, request, flash, redirect, url_for
 import eventlet
 import subprocess
@@ -23,6 +23,7 @@ app.secret_key = "supersecretkey"
 ## TODO: Create an initialization pipeline to prevent startup bugs 
 # selected_camera = V4l2Camera()
 
+camera_lock = threading.Lock()
 ACTIVE_DEPTHAI_STREAMS = {}
 selected_camera = None
 last_camera_config = load_config_file(CAMERA_CONFIG_PATH)
@@ -31,28 +32,37 @@ available_devices = list_available_devices()
 
 @atexit.register
 def cleanup():
-    if selected_camera:
-        selected_camera.stop()
+    with camera_lock:
+        if selected_camera:
+            selected_camera.stop()
 
 def handle_sigterm(signum, frame):
-    if selected_camera:
-        selected_camera.stop()
-        sys.exit(0)
+    with camera_lock:
+        if selected_camera:
+            selected_camera.stop()
+    sys.exit(0)
 
 signal.signal(signal.SIGTERM, handle_sigterm)
 
 def generate_frames():
-    global selected_camera, ACTIVE_DEPTHAI_STREAMS
+    try:
+        while True:
+            with camera_lock:
+                cam = selected_camera
+                active_streams = dict(ACTIVE_DEPTHAI_STREAMS)
+            if cam is None:
+                return
 
-    while True:
-        if selected_camera:
+            if isinstance(cam,DepthAICamera):
+                dev_id = cam.device_id
+                stream_info = active_streams.get(dev_id)
 
-            dev_id = selected_camera.get_config().get("device_id")
-
-            if isinstance(selected_camera,DepthAICamera):
-                frame = selected_camera.get_jpg_frame(stream =ACTIVE_DEPTHAI_STREAMS[dev_id]["selected_stream"])
+                if stream_info is None:
+                    continue
+                
+                frame = cam.get_jpg_frame(stream =stream_info["selected_stream"])
             else:
-                frame = selected_camera.get_jpg_frame()
+                frame = cam.get_jpg_frame()
             
 
             if frame is None:
@@ -60,23 +70,23 @@ def generate_frames():
 
             yield(b'--frame\r\n'
                 b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-        else:
-            return
+
+    except GeneratorExit:
+        return
+    except Exception as e:
+        print(e)
+        return
+
 
 @app.route('/')
 def index():
     return render_template("index.html")
 
-# @app.route("/current_config")
-# def current_config():
-#     if selected_camera:
-#         return jsonify(selected_camera.get_config())
-#     else:
-#         return jsonify({"status":"No camera is initialized"})
-
 @app.route('/video_feed')
 def video_feed():
-    if selected_camera:
+    with camera_lock:
+        cam = selected_camera
+    if cam:
         return Response(generate_frames(), 
                         mimetype='multipart/x-mixed-replace; boundary=frame',
                         headers={
@@ -87,8 +97,10 @@ def video_feed():
 
 @app.route("/lossless_frame")
 def lossless_frame():
-    if selected_camera:
-        frame=selected_camera.get_raw_frame()
+    with camera_lock:
+        cam = selected_camera
+    if cam:
+        frame=cam.get_raw_frame()
         if frame is None:
             return jsonify({"error": "no raw frame available"}), 500
         
@@ -104,8 +116,10 @@ def lossless_frame():
 
 @app.route("/raw_frame")
 def raw_frame():
-    if selected_camera:
-        frame=selected_camera.get_raw_frame()
+    with camera_lock:
+        cam = selected_camera
+    if cam:
+        frame=cam.get_raw_frame()
         if frame is None:
             return jsonify({"error": "no raw frame available"}), 500
 
@@ -154,12 +168,12 @@ def configure():
         else:
             fps = None
 
-        if selected_camera:
-            selected_camera.stop()
-            ACTIVE_DEPTHAI_STREAMS={}
+        with camera_lock:
+            if selected_camera:
+                selected_camera.stop()
+                ACTIVE_DEPTHAI_STREAMS.clear()
 
-
-        selected_camera = V4l2Camera(device= dev_id, codec = codec, width=width, height=height, fps = fps)
+            selected_camera = V4l2Camera(device= dev_id, codec = codec, width=width, height=height, fps = fps)
     
     elif camera_type == "depthai":
 
@@ -170,28 +184,32 @@ def configure():
         else:
             pipeline_builder=None
 
-        if selected_camera:
-            selected_camera.stop()
-            ACTIVE_DEPTHAI_STREAMS={}
+        with camera_lock:
+            if selected_camera:
+                selected_camera.stop()
+                ACTIVE_DEPTHAI_STREAMS.clear()
+            
+            selected_camera = DepthAICamera(device_id=dev_id, pipeline_builder=pipeline_builder)
         
-        selected_camera = DepthAICamera(device_id=dev_id, pipeline_builder=pipeline_builder)
-        ACTIVE_DEPTHAI_STREAMS[dev_id] = {"dev":selected_camera, "selected_stream": selected_stream}
-
+            ACTIVE_DEPTHAI_STREAMS[dev_id] = {"dev":selected_camera, "selected_stream": selected_stream}
 
     return jsonify({"status":"ok"})
 
 
 @app.route("/current_config")
 def info():
-    if selected_camera:
-        config = selected_camera.get_config()
+    with camera_lock:
+        cam = selected_camera
+        active_streams = dict(ACTIVE_DEPTHAI_STREAMS)
+    if cam:
+        config = cam.get_config()
         
-        if isinstance(selected_camera, DepthAICamera):
+        if isinstance(cam, DepthAICamera):
 
             dev_id = config.get("device_id")
             config["type"] = "depthai"
-            config["selected_stream"] = ACTIVE_DEPTHAI_STREAMS[dev_id]["selected_stream"]
-        elif isinstance(selected_camera, V4l2Camera):
+            config["selected_stream"] = active_streams.get(dev_id,{}).get("selected_stream")
+        elif isinstance(cam, V4l2Camera):
             config["type"] = "v4l2"
 
         return config
