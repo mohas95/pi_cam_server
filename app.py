@@ -1,137 +1,204 @@
 import cv2
 import numpy as np
-import time
+import os, json, time
 from flask import Flask, Response, render_template,jsonify, request, flash, redirect, url_for
 import eventlet
 import subprocess
 
-from camera import Camera, list_available_devices
+from utils import list_available_devices, load_config_file, save_camera_config
+
+from camera.v4l2_camera import V4l2Camera
+from camera.depthai_camera import DepthAICamera
+from camera.pipelines import AVAILABLE_PIPELINES
 import atexit, signal, sys
+
+CONFIG_DIR = "config"
+os.makedirs(CONFIG_DIR, exist_ok=True)
+CAMERA_CONFIG_PATH = os.path.join(CONFIG_DIR, "last_camera_config.json")
 
 app = Flask(__name__)
 app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
 app.secret_key = "supersecretkey" 
 
 ## TODO: Create an initialization pipeline to prevent startup bugs 
-camera = Camera()
+# selected_camera = V4l2Camera()
+
+ACTIVE_DEPTHAI_STREAMS = {}
+selected_camera = None
+last_camera_config = load_config_file(CAMERA_CONFIG_PATH)
+available_devices = list_available_devices()
+
 
 @atexit.register
 def cleanup():
-    camera.stop()
+    if selected_camera:
+        selected_camera.stop()
 
 def handle_sigterm(signum, frame):
-    camera.stop()
-    sys.exit(0)
+    if selected_camera:
+        selected_camera.stop()
+        sys.exit(0)
 
 signal.signal(signal.SIGTERM, handle_sigterm)
 
 def generate_frames():
+    global selected_camera, ACTIVE_DEPTHAI_STREAMS
+
     while True:
-        frame = camera.get_jpg_frame()
+        if selected_camera:
 
-        if frame is None:
-            continue
+            dev_id = selected_camera.get_config().get("device_id")
 
-        yield(b'--frame\r\n'
-              b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+            if isinstance(selected_camera,DepthAICamera):
+                frame = selected_camera.get_jpg_frame(stream =ACTIVE_DEPTHAI_STREAMS[dev_id]["selected_stream"])
+            else:
+                frame = selected_camera.get_jpg_frame()
+            
+
+            if frame is None:
+                continue
+
+            yield(b'--frame\r\n'
+                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+        else:
+            return
 
 @app.route('/')
 def index():
     return render_template("index.html")
 
-@app.route("/current_config")
-def current_config():
-    return jsonify(camera.get_config())
+# @app.route("/current_config")
+# def current_config():
+#     if selected_camera:
+#         return jsonify(selected_camera.get_config())
+#     else:
+#         return jsonify({"status":"No camera is initialized"})
 
 @app.route('/video_feed')
 def video_feed():
-    # return Response(generate_frames(), 
-    #                 mimetype='multipart/x-mixed-replace; boundary=frame')
-    return Response(generate_frames(), 
-                    mimetype='multipart/x-mixed-replace; boundary=frame',
-                    headers={
-                        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
-                        "Pragma": "no-cache"})
+    if selected_camera:
+        return Response(generate_frames(), 
+                        mimetype='multipart/x-mixed-replace; boundary=frame',
+                        headers={
+                            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+                            "Pragma": "no-cache"})
+    else:
+        return jsonify({"status":"No camera is initialized"})
 
 @app.route("/lossless_frame")
 def lossless_frame():
-    frame=camera.get_raw_frame()
-    if frame is None:
-        return jsonify({"error": "no raw frame available"}), 500
-    
-    ret, buf = cv2.imencode(".png", frame)
+    if selected_camera:
+        frame=selected_camera.get_raw_frame()
+        if frame is None:
+            return jsonify({"error": "no raw frame available"}), 500
+        
+        ret, buf = cv2.imencode(".png", frame)
 
-    if not ret:
-        return jsonify({"error": "encoding failed"}), 500
+        if not ret:
+            return jsonify({"error": "encoding failed"}), 500
 
-    return Response(buf.tobytes(), mimetype="image/png")
+        return Response(buf.tobytes(), mimetype="image/png")
+    else:
+        return jsonify({"status":"No camera is initialized"})
 
 
 @app.route("/raw_frame")
 def raw_frame():
-    frame=camera.get_raw_frame()
-    if frame is None:
-        return jsonify({"error": "no raw frame available"}), 500
+    if selected_camera:
+        frame=selected_camera.get_raw_frame()
+        if frame is None:
+            return jsonify({"error": "no raw frame available"}), 500
 
-    data = frame.tobytes()
-    shape = frame.shape
-    dtype = str(frame.dtype)
+        data = frame.tobytes()
+        shape = frame.shape
+        dtype = str(frame.dtype)
 
-    resp = Response(data, mimetype="application/octet-stream")
-    resp.headers["X-Height"] = str(shape[0])
-    resp.headers["X-Width"] = str(shape[1])
-    resp.headers["X-Channels"] = str(shape[2])
-    resp.headers["X-Dtype"] = dtype
+        resp = Response(data, mimetype="application/octet-stream")
+        resp.headers["X-Height"] = str(shape[0])
+        resp.headers["X-Width"] = str(shape[1])
+        resp.headers["X-Channels"] = str(shape[2])
+        resp.headers["X-Dtype"] = dtype
 
-    return resp
+        return resp
+    else:
+        return jsonify({"status":"No camera is initialized"})
+
 
 @app.route("/devices")
 def devices():
-    return jsonify(list_available_devices())
+    # global selected_camera, ACTIVE_DEPTHAI_STREAMS
+    return jsonify(list_available_devices(active_depthai_cameras=ACTIVE_DEPTHAI_STREAMS))
 
 
 @app.route("/configure", methods=["POST"])
 def configure():
+    global selected_camera, ACTIVE_DEPTHAI_STREAMS
+
     data = request.json
     dev_id = data.get("device_id")
-    codec = data.get("codec")
-    res = data.get("resolution")
-    fps = data.get("fps")
+    camera_type = data.get("type")
 
-    if res:
-        width, height = map(int, res.split("x"))
-    else:
-        width, height = None, None
 
-    if fps:
-        fps = int(fps)
-    else:
-        fps = None
+    if camera_type =="v4l2":
+        codec = data.get("codec")
+        res = data.get("resolution")
+        fps = data.get("fps")
 
-    camera.configure(device= dev_id, codec = codec, width=width, height=height, fps = fps)
+        if res:
+            width, height = map(int, res.split("x"))
+        else:
+            width, height = None, None
+
+        if fps:
+            fps = float(fps)
+        else:
+            fps = None
+
+        if selected_camera:
+            selected_camera.stop()
+            ACTIVE_DEPTHAI_STREAMS={}
+
+
+        selected_camera = V4l2Camera(device= dev_id, codec = codec, width=width, height=height, fps = fps)
     
+    elif camera_type == "depthai":
+
+        pipeline_name = data.get("pipeline")
+        selected_stream = data.get("output_stream")
+        if pipeline_name:
+            pipeline_builder = AVAILABLE_PIPELINES[pipeline_name]
+        else:
+            pipeline_builder=None
+
+        if selected_camera:
+            selected_camera.stop()
+            ACTIVE_DEPTHAI_STREAMS={}
+        
+        selected_camera = DepthAICamera(device_id=dev_id, pipeline_builder=pipeline_builder)
+        ACTIVE_DEPTHAI_STREAMS[dev_id] = {"dev":selected_camera, "selected_stream": selected_stream}
+
+
     return jsonify({"status":"ok"})
 
 
-@app.route("/info")
+@app.route("/current_config")
 def info():
-    config = camera.get_config()
+    if selected_camera:
+        config = selected_camera.get_config()
+        
+        if isinstance(selected_camera, DepthAICamera):
 
-    devices = list_available_devices()
-    device = None
-    for dev_id, info in devices.items():
-        if dev_id == config.get("device_id"):
-            device = info["device"]
-            break
+            dev_id = config.get("device_id")
+            config["type"] = "depthai"
+            config["selected_stream"] = ACTIVE_DEPTHAI_STREAMS[dev_id]["selected_stream"]
+        elif isinstance(selected_camera, V4l2Camera):
+            config["type"] = "v4l2"
 
-    return jsonify({
-        "device": device or "unknown",
-        "device_id": config.get("device_id"),
-        "codec": config.get("codec"),
-        "width": config.get("width"),
-        "height": config.get("height"),
-        "fps": config.get("fps")
-    })
+        return config
+
+    else:
+        return jsonify({"status":"No camera is initialized"})
+
 
 
 ########################### wifi configuration

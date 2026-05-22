@@ -136,12 +136,12 @@
             </select>
 
             <!-- <label for="codec">Codec: </label>  -->
-            <select id="codec">
+            <select id="codec_or_pipeline">
                 <option value="" disabled selected>Select codec</option>
             </select>
 
             <!-- <label for="resolution">Resolution: </label>  -->
-            <select id="resolution">
+            <select id="resolution_or_stream">
                 <option value="" disabled selected>Select resolution</option>
             </select>
 
@@ -184,45 +184,113 @@
                 devices = await res.json();
 
                 const deviceSel = document.getElementById("device_id");
-                deviceSel.innerHTML="";
+                deviceSel.innerHTML = '<option value="" disabled selected>Select device</option>';
 
                 for (const [dev_id, info] of Object.entries(devices)){
                     const opt = document.createElement("option");
-                    opt.value = info.device;
+                    opt.value = dev_id;
                     opt.dataset.dev_id = dev_id;
-                    opt.textContent = `${info.device} (${dev_id})`;
+                    opt.textContent = `[${info.type}]${info.device} (${dev_id})`;
                     deviceSel.appendChild(opt);
                 }
-                updateCodecs();
+                updateCameraOptions();
             }
 
+            function getSelectedDeviceInfo(){
+                const deviceSel = document.getElementById("device_id");
+                const devID = deviceSel.value;
 
-            function updateCodecs(){
-                const selected_device = document.getElementById("device_id").selectedOptions[0]
-                const devID = selected_device.dataset.dev_id;
-                const devInfo = devices[devID];
-                const codecSel = document.getElementById("codec");
-                codecSel.innerHTML = "";
+                if (!devID || !devices[devID]){
+                    return [null,null];
+                }
 
-                devInfo.formats.forEach( fmt => {
-                    const opt = document.createElement("option");
-                    opt.value = fmt.codec;
-                    opt.textContent = `${fmt.codec} (${fmt.desc})`;
-                    codecSel.appendChild(opt);
+                return [devID, devices[devID]];
+            }
+
+            function setSelectPlaceholder(select,text){
+                select.innerHTML = "";
+
+                const opt = document.createElement("option");
+                opt.value = "";
+                opt.disabled = true;
+                opt.selected = true;
+                opt.textContent = text;
+
+                select.appendChild(opt);
+            }
+
+            function updateCameraOptions(){
+                const[devID,devInfo] = getSelectedDeviceInfo();
+
+                const codec_or_pipelineSel= document.getElementById("codec_or_pipeline");
+                const resSel= document.getElementById("resolution_or_stream");
+                const fpsSel= document.getElementById("fps");
+
+                if(!devInfo){
+                    setSelectPlaceholder(codec_or_pipelineSel,"Select option");
+                    setSelectPlaceholder(resSel,"Select option");
+                    setSelectPlaceholder(fpsSel,"Select option");
+                    return;
+                }
+
+                if(devInfo.type === "v4l2"){
+                    codec_or_pipelineSel.style.display = "";
+                    resSel.style.display = "";
+                    fpsSel.style.display = "";
+
+                    setSelectPlaceholder(codec_or_pipelineSel,"Select codec");
+                    setSelectPlaceholder(resSel,"Select resolution");
+                    setSelectPlaceholder(fpsSel,"Select fps");
+
+                    devInfo.formats.forEach(fmt => {
+                        const opt = document.createElement("option");
+                        opt.value = fmt.codec;
+                        opt.textContent = `${fmt.codec} (${fmt.desc})`;
+                        codec_or_pipelineSel.appendChild(opt);
+                    });
+
+                    // if (codec_or_pipelineSel.options.length > 1) {
+                    //     codec_or_pipelineSel.selectedIndex = 1;
+                    // }
+                    updateResolutions();
+
+                }else if(devInfo.type === "depthai"){
+                    codec_or_pipelineSel.style.display = "";
+                    resSel.style.display = "";
+                    fpsSel.style.display = "none";
+
+                    setSelectPlaceholder(codec_or_pipelineSel,"Select pipeline");
+                    setSelectPlaceholder(resSel,"Select output stream");
+
+                    for(const pipelineName of Object.keys(devInfo.pipelines)){
+                        const opt = document.createElement("option");
+                        opt.value = pipelineName;
+                        opt.textContent= pipelineName;
+                        codec_or_pipelineSel.appendChild(opt);
                     }
-                );
 
-                updateResolutions();
-
+                    // if (codec_or_pipelineSel.options.length > 1) {
+                    //     codec_or_pipelineSel.selectedIndex = 1;
+                    // }
+                    updateDepthAIStreams();
+                }
             }
 
-            function updateResolutions(){
-                const selected_device = document.getElementById("device_id").selectedOptions[0]
-                const devID = selected_device.dataset.dev_id;
-                const devInfo = devices[devID];
-                const codec = document.getElementById("codec").value;
-                const resSel = document.getElementById("resolution");
-                resSel.innerHTML = "";
+            
+            function updateResolutions() {
+                const [devID, devInfo] = getSelectedDeviceInfo();
+
+                if (!devInfo) return;
+
+                if (devInfo.type === "depthai") {
+                    updateDepthAIStreams();
+                    return;
+                }
+
+                const codec = document.getElementById("codec_or_pipeline").value;
+                const resSel = document.getElementById("resolution_or_stream");
+
+                setSelectPlaceholder(resSel, "Select resolution");
 
                 const fmt = devInfo.formats.find(f => f.codec === codec);
 
@@ -232,63 +300,105 @@
                         opt.value = r.resolution;
                         opt.textContent = r.resolution;
                         resSel.appendChild(opt);
-                        }
-                    );
+                    });
                 }
 
                 updateFPS();
             }
+        
 
+            function updateDepthAIStreams() {
+                const [devID, devInfo] = getSelectedDeviceInfo();
 
-            function updateFPS(){
-                const selected_device = document.getElementById("device_id").selectedOptions[0]
-                const devID = selected_device.dataset.dev_id;
-                const devInfo = devices[devID];
-                const codec = document.getElementById("codec").value;
-                const res = document.getElementById("resolution").value;
-                const fpsSel = document.getElementById("fps");
-                fpsSel.innerHTML = "";
+                if (!devInfo || devInfo.type !== "depthai") return;
 
-                const fmt = devInfo.formats.find(f => f.codec === codec);
-                const res_fmt = fmt.resolutions.find(r=> r.resolution ===res);
+                const pipelineName = document.getElementById("codec_or_pipeline").value;
+                const streamSel = document.getElementById("resolution_or_stream");
 
-                if (res_fmt) {
-                    res_fmt.fps.forEach(fs => {
-                        const opt = document.createElement("option");
-                        opt.value = fs;
-                        opt.textContent = fs;
-                        fpsSel.appendChild(opt);
-                        }
-                    );
-                }
+                setSelectPlaceholder(streamSel, "Select output stream");
+
+                const streams = devInfo.pipelines[pipelineName] || [];
+
+                streams.forEach(streamName => {
+                    const opt = document.createElement("option");
+                    opt.value = streamName;
+                    opt.textContent = streamName;
+                    streamSel.appendChild(opt);
+                });
             }
 
+            function updateFPS() {
+                const [devID, devInfo] = getSelectedDeviceInfo();
+
+                if (!devInfo || devInfo.type !== "v4l2") return;
+
+                const codec = document.getElementById("codec_or_pipeline").value;
+                const res = document.getElementById("resolution_or_stream").value;
+                const fpsSel = document.getElementById("fps");
+
+                setSelectPlaceholder(fpsSel, "Select fps");
+
+                const fmt = devInfo.formats.find(f => f.codec === codec);
+                if (!fmt) return;
+
+                const res_fmt = fmt.resolutions.find(r => r.resolution === res);
+                if (!res_fmt) return;
+
+                res_fmt.fps.forEach(fs => {
+                    const opt = document.createElement("option");
+                    opt.value = fs;
+                    opt.textContent = fs;
+                    fpsSel.appendChild(opt);
+                });
+            }
 
             async function applyConfig() {
-                const device_id = document.getElementById("device_id").value;
-                const codec = document.getElementById("codec").value;
-                const resolution = document.getElementById("resolution").value;
-                const fps = document.getElementById("fps").value;
+                const [devID, devInfo] = getSelectedDeviceInfo();
 
+                if (!devInfo) {
+                    alert("Select a device first");
+                    return;
+                }
 
-                await fetch("/configure",{
-                        method: "POST",
-                        headers: {"Content-Type": "application/json"},
-                        body: JSON.stringify({device_id, codec, resolution, fps})
-                    }
-                );
+                let payload = {
+                    device_id: devID,
+                    type: devInfo.type
+                };
+
+                if (devInfo.type === "v4l2") {
+                    payload.codec = document.getElementById("codec_or_pipeline").value;
+                    payload.resolution = document.getElementById("resolution_or_stream").value;
+                    payload.fps = document.getElementById("fps").value;
+                }
+
+                else if (devInfo.type === "depthai") {
+                    payload.pipeline = document.getElementById("codec_or_pipeline").value;
+                    payload.output_stream = document.getElementById("resolution_or_stream").value;
+                }
+
+                await fetch("/configure", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(payload)
+                });
 
                 const img = document.getElementById("video");
                 img.src = "{{ url_for('video_feed') }}" + "?" + new Date().getTime();
-                refreshConfig();
 
+                refreshConfig();
             }
 
             async function refreshConfig() {
                 const res = await fetch("/current_config");
                 const cfg = await res.json();
-                
-                document.getElementById("current-config").textContent = `Current: ${cfg.device_id}, ${cfg.codec}, ${cfg.width}x${cfg.height} @ ${cfg.fps}fps`;
+
+                if (cfg.type === "depthai") {
+                    document.getElementById("current-config").textContent =
+                        `Current: ${cfg.device_id}, ${cfg.pipeline}, stream=${cfg.selected_stream}`;
+                } else {
+                    document.getElementById("current-config").textContent =
+                        `Current: ${cfg.device_id}, ${cfg.codec}, ${cfg.width}x${cfg.height} @ ${cfg.fps}fps`;
+                }
             }
 
 
@@ -329,16 +439,16 @@
 
 
             //  Camera event listers
-            const deviceSel = document.getElementById("device");
-            const codecSel = document.getElementById("codec");
-            const resSel = document.getElementById("resolution");
+            const deviceSel = document.getElementById("device_id");
+            const codec_or_pipelineSel = document.getElementById("codec_or_pipeline");
+            const resSel = document.getElementById("resolution_or_stream");
 
             if (deviceSel){
-                deviceSel.addEventListener("change", updateCodecs);
+                deviceSel.addEventListener("change", updateCameraOptions);
             }
             
-            if (codecSel){
-                codecSel.addEventListener("change", updateResolutions);
+            if (codec_or_pipelineSel){
+                codec_or_pipelineSel.addEventListener("change", updateResolutions);
             }
 
             if(resSel){
