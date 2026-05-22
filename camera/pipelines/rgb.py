@@ -8,14 +8,14 @@ def build_rgb_pipeline(pipeline, device, size, fps):
                               enableUndistortion=True,
                               fps=fps).createOutputQueue()
     
-    return {"rgb":output}
+    return {"CAM_A_rgb":output}
 
 
 RGB_PIPELINE = PipelineDefinition(
-    name="rgb",
+    name="rgb pipeline",
     description="single RGB camera stream",
     build_fn=build_rgb_pipeline,
-    output_streams=["rgb"],
+    output_streams=["CAM_A_rgb"],
     default_params={
         "size":(1280,800),
         "fps":20
