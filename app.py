@@ -77,6 +77,7 @@ def generate_frames(stream = None):
             
 
             if frame is None:
+                time.sleep(0.01)
                 continue
 
             yield(b'--frame\r\n'
@@ -279,7 +280,10 @@ def info():
         cam = selected_camera
         active_streams = dict(ACTIVE_DEPTHAI_STREAMS)
     if cam:
-        config = cam.get_config()
+        try:
+            config = cam.get_config()
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
         
         if isinstance(cam, DepthAICamera):
 
