@@ -5,7 +5,7 @@ from flask import Flask, Response, render_template,jsonify, request, flash, redi
 import eventlet
 import subprocess
 
-from utils import list_available_devices, load_config_file, save_camera_config
+from utils import list_available_devices, load_config_file, save_camera_config, initialize_cameras, validate_camera_config
 
 from camera.v4l2_camera import V4l2Camera
 from camera.depthai_camera import DepthAICamera
@@ -20,14 +20,18 @@ app = Flask(__name__)
 app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
 app.secret_key = "supersecretkey" 
 
-## TODO: Create an initialization pipeline to prevent startup bugs 
-# selected_camera = V4l2Camera()
-
 camera_lock = threading.Lock()
-ACTIVE_DEPTHAI_STREAMS = {}
-selected_camera = None
+
 last_camera_config = load_config_file(CAMERA_CONFIG_PATH)
 available_devices = list_available_devices()
+
+if validate_camera_config(last_camera_config,available_devices):
+    selected_camera, ACTIVE_DEPTHAI_STREAMS= initialize_cameras(last_camera_config)
+    print("Last configuration validated: loading camera")
+else:
+    ACTIVE_DEPTHAI_STREAMS = {}
+    selected_camera = None
+    print("Previous camera configuration not found, please select camera")
 
 
 @atexit.register
@@ -192,6 +196,8 @@ def configure():
             selected_camera = DepthAICamera(device_id=dev_id, pipeline_builder=pipeline_builder)
         
             ACTIVE_DEPTHAI_STREAMS[dev_id] = {"dev":selected_camera, "selected_stream": selected_stream}
+
+    save_camera_config(CAMERA_CONFIG_PATH,data)
 
     return jsonify({"status":"ok"})
 

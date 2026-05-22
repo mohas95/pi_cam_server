@@ -4,7 +4,8 @@ import re
 import glob
 
 import depthai as dai
-# from camera.depthai_camera import DepthAICamera
+from camera.depthai_camera import DepthAICamera
+from camera.v4l2_camera import V4l2Camera
 from camera.pipelines import AVAILABLE_PIPELINES
 
 
@@ -25,6 +26,100 @@ def save_camera_config(file_path, config):
 
     with open(file_path,"w") as f:
         json.dump(config, f, indent=4)
+
+
+def initialize_cameras(data):
+    active_depthai_streams = {}
+    selected_camera = None
+    dev_id = data.get("device_id")
+    camera_type = data.get("type")
+
+    if camera_type =="v4l2":
+        codec = data.get("codec")
+        res = data.get("resolution")
+        fps = data.get("fps")
+
+        if res:
+            width, height = map(int, res.split("x"))
+        else:
+            width, height = None, None
+
+        if fps:
+            fps = float(fps)
+        else:
+            fps = None
+
+        selected_camera = V4l2Camera(device= dev_id, codec = codec, width=width, height=height, fps = fps)
+    
+    elif camera_type == "depthai":
+
+        pipeline_name = data.get("pipeline")
+        selected_stream = data.get("output_stream")
+        if pipeline_name:
+            pipeline_builder = AVAILABLE_PIPELINES[pipeline_name]
+        else:
+            pipeline_builder=None
+
+            
+        selected_camera = DepthAICamera(device_id=dev_id, pipeline_builder=pipeline_builder)
+        active_depthai_streams[dev_id] = {"dev":selected_camera, "selected_stream": selected_stream}
+
+    return selected_camera, active_depthai_streams
+
+
+def validate_camera_config(config, available_devices):
+    if not isinstance(config, dict):
+        return False
+
+    if "device_id" not in config or "type" not in config:
+        return False
+
+    dev_id = config["device_id"]
+    camera_type = config["type"]
+
+    dev_info = available_devices.get(dev_id)
+    if not dev_info:
+        return False
+
+    if dev_info.get("type") != camera_type:
+        return False
+
+    if camera_type == "v4l2":
+        codec = config.get("codec")
+        resolution = config.get("resolution")
+        fps = config.get("fps")
+
+        if not codec or not resolution or fps is None:
+            return False
+
+        for fmt in dev_info.get("formats", []):
+            if fmt.get("codec") != codec:
+                continue
+
+            for res_info in fmt.get("resolutions", []):
+                if res_info.get("resolution") != resolution:
+                    continue
+
+                available_fps = [float(x) for x in res_info.get("fps", [])]
+                return float(fps) in available_fps
+
+        return False
+
+    if camera_type == "depthai":
+        pipeline = config.get("pipeline")
+        output_stream = config.get("output_stream")
+
+        if not pipeline or not output_stream:
+            return False
+
+        pipelines = dev_info.get("pipelines", {})
+
+        return (
+            pipeline in pipelines
+            and output_stream in pipelines[pipeline]
+        )
+
+    return False
 
 
 
