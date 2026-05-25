@@ -76,19 +76,6 @@ def initialize_cameras(data):
                                             "selected_stream": selected_stream,
                                             "pipelines":pipeline_info}
 
-    # elif camera_type == "depthai":
-
-    #     pipeline_name = data.get("pipeline")
-    #     selected_stream = data.get("output_stream")
-    #     if pipeline_name:
-    #         pipeline_builder = AVAILABLE_PIPELINES[pipeline_name]
-    #     else:
-    #         pipeline_builder=None
-
-            
-    #     selected_camera = DepthAICamera(device_id=dev_id, pipeline_builder=pipeline_builder)
-    #     active_depthai_streams[dev_id] = {"dev":selected_camera, "selected_stream": selected_stream}
-
     return selected_camera, active_depthai_streams
 
 
@@ -159,9 +146,6 @@ def list_available_devices(skip_non_device=True, active_depthai_cameras = None):
     depthai_devices = dai.Device.getAllAvailableDevices()
     if active_depthai_cameras:
         for dev_id,active_cam_info in active_depthai_cameras.items():
-            # depthai_devices.append(active_cam["dev"].device_info)
-
-            # dev_info = active_cam["dev"].device_info
 
             pipeline_info = active_cam_info.get("pipelines",{})
 
@@ -175,7 +159,6 @@ def list_available_devices(skip_non_device=True, active_depthai_cameras = None):
    
     for dev_info in depthai_devices:
 
-        # with dai.Pipeline() as temporary_pipeline:
         with dai.Device(dev_info) as temporary_device:
 
             pipeline_info={}
@@ -190,7 +173,6 @@ def list_available_devices(skip_non_device=True, active_depthai_cameras = None):
 
             cameras[dev_info.getDeviceId()] = {"device": f"DepthAICam",
                                 "pipelines":pipeline_info,
-                                # "pipelines": {pipeline_name: pipeline.output_streams for pipeline_name, pipeline in AVAILABLE_PIPELINES.items()},
                                 "type": "depthai"
                                 }
             

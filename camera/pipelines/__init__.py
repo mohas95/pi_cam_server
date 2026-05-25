@@ -1,5 +1,5 @@
-from camera.pipelines.rgb import RGB_PIPELINE
+from camera.pipelines.allCam import ALL_CAM_PIPELINE
 
 AVAILABLE_PIPELINES = {
-    RGB_PIPELINE.name: RGB_PIPELINE
+    ALL_CAM_PIPELINE.name: ALL_CAM_PIPELINE
 }

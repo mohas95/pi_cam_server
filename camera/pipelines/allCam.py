@@ -2,7 +2,7 @@ import depthai as dai
 from camera.pipeline_definition import PipelineDefinition
 
 
-def build_rgb_pipeline(pipeline, device, size, fps):
+def build_all_cam_pipeline(pipeline, device, size, fps):
 
     sockets = device.getConnectedCameras()
     output_queues={}
@@ -26,10 +26,10 @@ def build_rgb_pipeline(pipeline, device, size, fps):
     return output_queues
 
 
-RGB_PIPELINE = PipelineDefinition(
-    name="rgb pipeline",
+ALL_CAM_PIPELINE = PipelineDefinition(
+    name="all cam modules pipeline",
     description="single RGB camera stream",
-    build_fn=build_rgb_pipeline,
+    build_fn=build_all_cam_pipeline,
     default_params={
         "size":(1280,800),
         "fps":20

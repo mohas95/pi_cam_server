@@ -3,10 +3,10 @@ import threading
 import time
 import cv2
 
-from camera.pipelines.rgb import RGB_PIPELINE
+from camera.pipelines.allCam import ALL_CAM_PIPELINE
 
 class DepthAICamera:
-    def __init__(self, device_id=None, pipeline_builder = RGB_PIPELINE):
+    def __init__(self, device_id=None, pipeline_builder = ALL_CAM_PIPELINE):
         
         self.device_id = device_id
         self.device_info = None
@@ -48,7 +48,7 @@ class DepthAICamera:
             self.stop()
         self.device_id = device_id
         self.device_info = dai.DeviceInfo(device_id) if device_id else None
-        self.pipeline_builder = pipeline_builder or RGB_PIPELINE
+        self.pipeline_builder = pipeline_builder or ALL_CAM_PIPELINE
         self.device = dai.Device(self.device_info) if self.device_info else dai.Device()
         self.pipeline = dai.Pipeline(self.device)
         self.queues = self.pipeline_builder.build(self.pipeline, self.device)
