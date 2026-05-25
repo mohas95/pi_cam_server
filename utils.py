@@ -28,6 +28,23 @@ def save_camera_config(file_path, config):
         json.dump(config, f, indent=4)
 
 
+def get_pipelineinfo(dev_id):
+    pipeline_info={}
+
+    with dai.Device(dai.DeviceInfo(dev_id)) as device:
+        pipeline = dai.Pipeline(device)
+
+
+        for pipeline_name, pipeline_builder in AVAILABLE_PIPELINES.items():
+
+            output_queues = pipeline_builder.build(pipeline, device)
+            output_img_streams= pipeline_builder.get_output_meta(output_queues).get("img_streams")
+            pipeline_info[pipeline_name] =  output_img_streams
+
+    return pipeline_info
+        
+
+
 def initialize_cameras(data):
     active_depthai_streams = {}
     selected_camera = None
@@ -59,16 +76,21 @@ def initialize_cameras(data):
             pipeline_builder = AVAILABLE_PIPELINES[pipeline_name]
         else:
             pipeline_builder=None
-        pipeline_info={}
         
-        with dai.Device(dai.DeviceInfo(dev_id)) as temporary_device:
-            temporary_pipeline = dai.Pipeline(temporary_device)
+        
+        pipeline_info=get_pipelineinfo(dev_id)
+
+        
+        # with dai.Device(dai.DeviceInfo(dev_id)) as temporary_device:
+        #     temporary_pipeline = dai.Pipeline(temporary_device)
 
 
-            for temp_pipeline_name, temp_pipeline_builder in AVAILABLE_PIPELINES.items():
+        #     for temp_pipeline_name, temp_pipeline_builder in AVAILABLE_PIPELINES.items():
 
-                output_streams = temp_pipeline_builder.build(temporary_pipeline, temporary_device)
-                pipeline_info[temp_pipeline_name] =  list(output_streams.keys())
+        #         output_queues = temp_pipeline_builder.build(temporary_pipeline, temporary_device)
+        #         output_data= temp_pipeline_builder.transform(output_queues)
+        #         output_streams = output_data.get("img_out")
+        #         pipeline_info[temp_pipeline_name] =  list(output_streams.keys())
         
         selected_camera = DepthAICamera(device_id=dev_id, pipeline_builder=pipeline_builder)
     
@@ -159,23 +181,29 @@ def list_available_devices(skip_non_device=True, active_depthai_cameras = None):
    
     for dev_info in depthai_devices:
 
-        with dai.Device(dev_info) as temporary_device:
+        dev_id = dev_info.getDeviceId()
 
-            pipeline_info={}
+        pipeline_info=get_pipelineinfo(dev_id)
 
-            for pipeline_name, pipeline_builder in AVAILABLE_PIPELINES.items():
-                temporary_pipeline = dai.Pipeline(temporary_device)
+        # with dai.Device(dev_info) as temporary_device:
+
+        #     pipeline_info={}
+
+        #     for pipeline_name, pipeline_builder in AVAILABLE_PIPELINES.items():
+        #         temporary_pipeline = dai.Pipeline(temporary_device)
 
 
-                output_streams = pipeline_builder.build(temporary_pipeline, temporary_device)
-                pipeline_info[pipeline_name] =  list(output_streams.keys())
+        #         output_queues = pipeline_builder.build(temporary_pipeline, temporary_device)
+        #         output_data= pipeline_builder.transform(output_queues)
+        #         output_streams = output_data.get("img_out")
+        #         pipeline_info[pipeline_name] =  list(output_streams.keys())
 
 
-            cameras[dev_info.getDeviceId()] = {"device": f"DepthAICam",
-                                "pipelines":pipeline_info,
-                                "type": "depthai"
-                                }
-            
+        cameras[dev_id] = {"device": f"DepthAICam",
+                            "pipelines":pipeline_info,
+                            "type": "depthai"
+                            }
+        
 
     for dev in glob.glob("/dev/video*"):
         try:

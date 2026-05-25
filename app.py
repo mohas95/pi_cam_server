@@ -5,7 +5,7 @@ from flask import Flask, Response, render_template,jsonify, request, flash, redi
 import subprocess
 import depthai as dai
 
-from utils import list_available_devices, load_config_file, save_camera_config, initialize_cameras, validate_camera_config
+from utils import list_available_devices, load_config_file, save_camera_config, initialize_cameras, validate_camera_config, get_pipelineinfo
 
 from camera.v4l2_camera import V4l2Camera
 from camera.depthai_camera import DepthAICamera
@@ -245,18 +245,22 @@ def configure():
         time.sleep(1.0)
 
 
-        pipeline_info={}
+        # pipeline_info={}
+        pipeline_info=get_pipelineinfo(dev_id)
+
         
-        with dai.Device(dai.DeviceInfo(dev_id)) as temporary_device:
+        # with dai.Device(dai.DeviceInfo(dev_id)) as temporary_device:
 
 
-            for temp_pipeline_name, temp_pipeline_builder in AVAILABLE_PIPELINES.items():
+        #     for temp_pipeline_name, temp_pipeline_builder in AVAILABLE_PIPELINES.items():
 
-                temporary_pipeline = dai.Pipeline(temporary_device)
+        #         temporary_pipeline = dai.Pipeline(temporary_device)
 
 
-                output_streams = temp_pipeline_builder.build(temporary_pipeline, temporary_device)
-                pipeline_info[temp_pipeline_name] =  list(output_streams.keys())
+        #         output_queues = temp_pipeline_builder.build(temporary_pipeline, temporary_device)
+        #         output_data= temp_pipeline_builder.transform(output_queues)
+        #         output_streams = output_data.get("img_out")
+        #         pipeline_info[temp_pipeline_name] =  list(output_streams.keys())
         
         gc.collect()
         time.sleep(1.0)
