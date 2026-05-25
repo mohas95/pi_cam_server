@@ -7,6 +7,10 @@ This project creates a simple flask + openCV server for streaming video and acce
 Supports **live MJPEG video streaming**, **lossless PNG snapshots**, and **raw NumPy frame data** for scientific/computer-vision clients.  
 
 
+#### In the project pipeline
+- RTSP serving
+- Computer vision outputs(Particularly from DepthAI cameras)
+
 ---
 ## Features
 
@@ -28,12 +32,11 @@ Supports **live MJPEG video streaming**, **lossless PNG snapshots**, and **raw N
 - NumPy  
 - Flask  
 - Gunicorn (for production with systemd)
-- eventlet (for front end event handling) 
 
 ### Install dependencies
 ```bash
 sudo apt update
-sudo apt install python3-opencv python3-numpy python3-flask python3-pip python3-eventlet v4l-utils guinicorn
+sudo apt install python3-opencv python3-numpy python3-flask python3-pip v4l-utils guinicorn
 ```
 ---
 
