@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 import os, json, time,threading, gc
 from flask import Flask, Response, render_template,jsonify, request, flash, redirect, url_for
-import eventlet
 import subprocess
 import depthai as dai
 
@@ -353,7 +352,7 @@ def scan_wifi():
         # Force a fresh scan first
         subprocess.call(["sudo", "nmcli", "dev", "wifi", "rescan"])
 
-        eventlet.sleep(2)  # Optional: slight delay to allow scan completion
+        time.sleep(2)  # Optional: slight delay to allow scan completion
 
         result = subprocess.check_output(["sudo", "nmcli", "-t", "-f", "SSID,SIGNAL", "dev", "wifi"]).decode()
 
