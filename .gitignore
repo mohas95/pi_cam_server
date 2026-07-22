@@ -2,6 +2,7 @@
 
 config/last_camera_config.json
 config/custom_pipelines.json
+custom_pipelines/*
 
 
 # Byte-compiled / optimized / DLL files
